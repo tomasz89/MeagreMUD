@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
 
-    MeagreMud::MeagreMud meagreMud;
+    MeagreMud::MainWindow meagreMud;
     meagreMud.show();
 
     return app.exec();
