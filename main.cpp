@@ -1,4 +1,11 @@
+#include <QApplication>
+
+#include "MainWindow.h"
+
 int main(int argc, char **argv)
 {
-    return 0;
+    QApplication application(argc, argv);
+    MeagreMUD::MainWindow window;
+    window.show();
+    return application.exec();
 }

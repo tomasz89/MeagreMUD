@@ -1,10 +1,18 @@
-cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR)
 
 project(MeagreMUD)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-find_package(Qt5Widgets REQUIRED)
-add_executable(MeagreMUD main.cpp)
-target_link_libraries(MeagreMUD Qt5::Widgets)
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+
+set(meagremud_SRCS
+    Console.cpp
+    MainWindow.cpp
+    main.cpp
+    SettingsDialog.cpp
+)
+
+add_executable(meagremud ${meagremud_SRCS})
+target_link_libraries(meagremud Qt5::Widgets)
