@@ -13,6 +13,8 @@ namespace MeagreMUD
 {
     // Forward declarations
     class Console;
+    class SettingsDialog;
+    class Settings;
 
     class MainWindow : public QMainWindow
     {
@@ -34,6 +36,7 @@ namespace MeagreMUD
         QMenu *toolsMenu;
         QAction *exitAction;
         QAction *settingsAction;
+        Settings *settings;
     };
 }
 

@@ -11,6 +11,7 @@ set(meagremud_SRCS
     Console.cpp
     MainWindow.cpp
     main.cpp
+    Settings.cpp
     SettingsDialog.cpp
 )
 

@@ -1,6 +1,6 @@
 #include "SettingsDialog.h"
+#include "Settings.h"
 
-#include <QIntValidator>
 #include <QGroupBox>
 #include <QLineEdit>
 #include <QFormLayout>
@@ -10,15 +10,24 @@
 
 QT_USE_NAMESPACE
 
-static const char blankString[] = QT_TRANSLATE_NOOP("SettingsDialog", "N/A");
-
-MeagreMUD::SettingsDialog::SettingsDialog(QWidget *parent) :
+MeagreMUD::SettingsDialog::SettingsDialog(MeagreMUD::Settings *currentSettings, QWidget *parent) :
     QDialog(parent),
-    formGroupBox(new QGroupBox(tr("Connection Settings")))
+    hostLineEdit(0),
+    portSpinBox(0),
+    settings(currentSettings)
 {
-    createTCPSettingsForm();
+    QFormLayout *layout = new QFormLayout;
+    hostLineEdit = new QLineEdit(settings->host());
+    layout->addRow(new QLabel(tr("Host:")), hostLineEdit);
+    portSpinBox = new QSpinBox();
+    portSpinBox->setRange(1, 65535);
+    portSpinBox->setValue(settings->port());
+    layout->addRow(new QLabel(tr("Port:")), portSpinBox);
 
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    QGroupBox *formGroupBox = new QGroupBox(tr("Connection Settings"));
+    formGroupBox->setLayout(layout);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
@@ -32,35 +41,16 @@ MeagreMUD::SettingsDialog::SettingsDialog(QWidget *parent) :
 
     setWindowTitle(tr("Settings"));
 
-}
+    connect(this, SIGNAL(accepted()), this, SLOT(acceptSettings()));
 
-void MeagreMUD::SettingsDialog::createTCPSettingsForm()
-{
-    QFormLayout *layout = new QFormLayout;
-    layout->addRow(new QLabel(tr("Host:")), new QLineEdit);
-    QSpinBox *portSpinBox = new QSpinBox();
-    portSpinBox->setMinimum(0);
-    portSpinBox->setMinimum(65535);
-    portSpinBox->setValue(23);
-    layout->addRow(new QLabel(tr("Port:")), portSpinBox);
-    formGroupBox->setLayout(layout);
 }
 
 MeagreMUD::SettingsDialog::~SettingsDialog()
 {
-    delete formGroupBox;
-    delete buttonBox;
 }
 
-MeagreMUD::SettingsDialog::Settings MeagreMUD::SettingsDialog::settings() const
+void MeagreMUD::SettingsDialog::acceptSettings()
 {
-    return currentSettings;
+    settings->setHost(hostLineEdit->text());
+    settings->setPort(portSpinBox->value());
 }
-
-#if 0
-void SettingsDialog::apply()
-{
-    updateSettings();
-    hide();
-}
-#endif

@@ -8,38 +8,32 @@ QT_USE_NAMESPACE
 
 QT_BEGIN_NAMESPACE
 
-class QIntValidator;
-class QGroupBox;
-class QDialogButtonBox;
+class QLineEdit;
+class QSpinBox;
 
 QT_END_NAMESPACE
 
 namespace MeagreMUD
 {
+class Settings;
+
 class SettingsDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    struct Settings {
-        QString host;
-        quint16 port;
-    };
-
-    explicit SettingsDialog(QWidget *parent = nullptr);
+    explicit SettingsDialog(Settings *currentSettings, QWidget *parent = nullptr);
     virtual ~SettingsDialog();
 
-    Settings settings() const;
+public Q_SLOTS:
+    void acceptSettings();
 
 private slots:
 
 private:
-    void createTCPSettingsForm();
-private:
-    QGroupBox *formGroupBox;
-    QDialogButtonBox *buttonBox;
-    Settings currentSettings;
-    QIntValidator *intValidator;
+    QLineEdit *hostLineEdit;
+    QSpinBox *portSpinBox;
+    Settings *settings;
 };
 }
 

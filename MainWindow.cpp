@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "Console.h"
 #include "SettingsDialog.h"
+#include "Settings.h"
 
 #include <QVBoxLayout>
 #include <QMenuBar>
@@ -10,7 +11,12 @@
 MeagreMUD::MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     console(new MeagreMUD::Console),
-    menuBar(new QMenuBar)
+    menuBar(new QMenuBar),
+    fileMenu(0),
+    toolsMenu(0),
+    exitAction(0),
+    settingsAction(0),
+    settings(new MeagreMUD::Settings(this)) // TODO read from config
 {
     console->setEnabled(false);
     buildMenuBar();
@@ -40,8 +46,8 @@ MeagreMUD::MainWindow::~MainWindow()
 
 void MeagreMUD::MainWindow::openSettings()
 {
-    SettingsDialog *settingsDialog = new SettingsDialog;
+    MeagreMUD::SettingsDialog *settingsDialog = new SettingsDialog(settings);
     settingsDialog->setWindowModality(Qt::NonModal);
-    //connect(settingsDialog, SIGNAL(finished(int)), this, SLOT())
     settingsDialog->show();
 }
+
