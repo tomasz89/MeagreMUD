@@ -21,21 +21,19 @@ namespace MeagreMUD
         Q_OBJECT
 
     public:
-        explicit MainWindow(QWidget *parent = nullptr);
+        explicit MainWindow(const QString &settingsFile, QWidget *parent = nullptr);
         ~MainWindow();
 
     public Q_SLOTS:
-        void openSettings();
+        void onSettingsAction();
+        void onSaveAction();
+        void onSaveAsAction();
 
     private:
         void buildMenuBar();
 
         Console *console;
         QMenuBar *menuBar;
-        QMenu *fileMenu;
-        QMenu *toolsMenu;
-        QAction *exitAction;
-        QAction *settingsAction;
         Settings *settings;
     };
 }

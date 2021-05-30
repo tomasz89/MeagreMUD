@@ -7,16 +7,13 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
+#include <QFileDialog>
 
-MeagreMUD::MainWindow::MainWindow(QWidget *parent) :
+MeagreMUD::MainWindow::MainWindow(const QString &settingsFile, QWidget *parent) :
     QMainWindow(parent),
     console(new MeagreMUD::Console),
     menuBar(new QMenuBar),
-    fileMenu(0),
-    toolsMenu(0),
-    exitAction(0),
-    settingsAction(0),
-    settings(new MeagreMUD::Settings(this)) // TODO read from config
+    settings(new MeagreMUD::Settings(this))
 {
     console->setEnabled(false);
     buildMenuBar();
@@ -27,15 +24,21 @@ MeagreMUD::MainWindow::MainWindow(QWidget *parent) :
 
 void MeagreMUD::MainWindow::buildMenuBar()
 {
-    fileMenu = new QMenu(tr("&File"), this);
-    exitAction = fileMenu->addAction(tr("E&xit"));
-    menuBar->addMenu(fileMenu);
+    QMenu *fileMenu = new QMenu(tr("&File"), this);
+
+    QAction *saveAction = fileMenu->addAction(tr("&Save"));
+    connect(saveAction, SIGNAL(triggered()), this, SLOT(onSaveAction()));
+    QAction *saveAsAction = fileMenu->addAction(tr("Save &As"));
+    connect(saveAsAction, SIGNAL(triggered()), this, SLOT(onSaveAsAction()));
+    QAction *exitAction = fileMenu->addAction(tr("E&xit"));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
 
-    toolsMenu = new QMenu(tr("&Tools"), this);
-    settingsAction = toolsMenu->addAction(tr("&Settings"));
+    menuBar->addMenu(fileMenu);
+
+    QMenu *toolsMenu = new QMenu(tr("&Tools"), this);
+    QAction *settingsAction = toolsMenu->addAction(tr("&Settings"));
     menuBar->addMenu(toolsMenu);
-    connect(settingsAction, SIGNAL(triggered()), this, SLOT(openSettings()));
+    connect(settingsAction, SIGNAL(triggered()), this, SLOT(onSettingsAction()));
 }
 
 MeagreMUD::MainWindow::~MainWindow()
@@ -44,10 +47,26 @@ MeagreMUD::MainWindow::~MainWindow()
     delete menuBar;
 }
 
-void MeagreMUD::MainWindow::openSettings()
+void MeagreMUD::MainWindow::onSettingsAction()
 {
     MeagreMUD::SettingsDialog *settingsDialog = new SettingsDialog(settings);
     settingsDialog->setWindowModality(Qt::NonModal);
     settingsDialog->show();
 }
 
+void MeagreMUD::MainWindow::onSaveAction()
+{
+    // do nothing.
+}
+
+void MeagreMUD::MainWindow::onSaveAsAction()
+{
+    QFileDialog dialog(this);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    if (dialog.exec())
+    {
+        QStringList fileNames = dialog.selectedFiles();
+
+        qDebug () << fileNames;
+    }
+}
