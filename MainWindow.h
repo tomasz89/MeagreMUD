@@ -28,6 +28,7 @@ namespace MeagreMUD
         void onSettingsAction();
         void onSaveAction();
         void onSaveAsAction();
+        void onConnectAction();
 
     private:
         void buildMenuBar();

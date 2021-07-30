@@ -30,6 +30,13 @@ void MeagreMUD::MainWindow::buildMenuBar()
     connect(saveAction, SIGNAL(triggered()), this, SLOT(onSaveAction()));
     QAction *saveAsAction = fileMenu->addAction(tr("Save &As"));
     connect(saveAsAction, SIGNAL(triggered()), this, SLOT(onSaveAsAction()));
+
+    fileMenu->addSeparator();
+    QAction *connectAction = fileMenu->addAction(tr("&Connect"));
+    connect(connectAction, SIGNAL(triggered()), this, SLOT(onConnectAction()));
+    fileMenu->addAction(connectAction);
+
+    fileMenu->addSeparator();
     QAction *exitAction = fileMenu->addAction(tr("E&xit"));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
 
@@ -69,4 +76,8 @@ void MeagreMUD::MainWindow::onSaveAsAction()
 
         qDebug () << fileNames;
     }
+}
+
+void MeagreMUD::MainWindow::onConnectAction()
+{
 }
