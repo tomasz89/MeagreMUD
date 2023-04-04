@@ -9,9 +9,9 @@ QT_USE_NAMESPACE
 
 MeagreMUD::Settings::Settings(QObject *parent) :
     QObject(parent),
-    qSettings(0),
+    qSettings(new QSettings(this)),
     settingsFileName(),
-    hostName("www.greatermud.com"),
+    hostName("greatermud.com"),
     hostPort(23)
 {
 }
@@ -46,5 +46,5 @@ void MeagreMUD::Settings::setSettingsFileName(const QString &fileName)
 {
     settingsFileName = fileName;
 
-    qSettings = new QSettings(this);
+    //TODO does nothing
 }

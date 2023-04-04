@@ -25,6 +25,9 @@ public:
     explicit SettingsDialog(Settings *currentSettings, QWidget *parent = nullptr);
     virtual ~SettingsDialog();
 
+signals:
+    void settingsUpdated(MeagreMUD::Settings *newSettings);
+
 public Q_SLOTS:
     void acceptSettings();
 

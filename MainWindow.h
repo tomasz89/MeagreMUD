@@ -12,7 +12,7 @@ class QAction;
 namespace MeagreMUD
 {
     // Forward declarations
-    class Console;
+    class TerminalWidget;
     class SettingsDialog;
     class Settings;
 
@@ -28,12 +28,11 @@ namespace MeagreMUD
         void onSettingsAction();
         void onSaveAction();
         void onSaveAsAction();
-        void onConnectAction();
 
     private:
         void buildMenuBar();
 
-        Console *console;
+        TerminalWidget *terminalWidget;
         QMenuBar *menuBar;
         Settings *settings;
     };

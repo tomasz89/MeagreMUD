@@ -1,5 +1,5 @@
 #include "MainWindow.h"
-#include "Console.h"
+#include "terminalwidget.h"
 #include "SettingsDialog.h"
 #include "Settings.h"
 
@@ -11,15 +11,15 @@
 
 MeagreMUD::MainWindow::MainWindow(const QString &settingsFile, QWidget *parent) :
     QMainWindow(parent),
-    console(new MeagreMUD::Console),
+    terminalWidget(new MeagreMUD::TerminalWidget(this)),
     menuBar(new QMenuBar),
     settings(new MeagreMUD::Settings(this))
 {
-    console->setEnabled(false);
+    terminalWidget->setEnabled(false);
     buildMenuBar();
     setMenuBar(menuBar);
 
-    setCentralWidget(console);
+    setCentralWidget(terminalWidget);
 }
 
 void MeagreMUD::MainWindow::buildMenuBar()
@@ -33,7 +33,7 @@ void MeagreMUD::MainWindow::buildMenuBar()
 
     fileMenu->addSeparator();
     QAction *connectAction = fileMenu->addAction(tr("&Connect"));
-    connect(connectAction, SIGNAL(triggered()), this, SLOT(onConnectAction()));
+    connect(connectAction, SIGNAL(triggered()), terminalWidget, SLOT(onConnectAction()));
     fileMenu->addAction(connectAction);
 
     fileMenu->addSeparator();
@@ -50,14 +50,15 @@ void MeagreMUD::MainWindow::buildMenuBar()
 
 MeagreMUD::MainWindow::~MainWindow()
 {
-    delete console;
+    delete terminalWidget;
     delete menuBar;
 }
 
 void MeagreMUD::MainWindow::onSettingsAction()
 {
-    MeagreMUD::SettingsDialog *settingsDialog = new SettingsDialog(settings);
+    MeagreMUD::SettingsDialog *settingsDialog = new SettingsDialog(settings, this);
     settingsDialog->setWindowModality(Qt::NonModal);
+    connect(settingsDialog, SIGNAL(settingsUpdated(MeagreMUD::Settings *)), terminalWidget, SLOT(onSettingsChanged(MeagreMUD::Settings *)));
     settingsDialog->show();
 }
 
@@ -76,8 +77,4 @@ void MeagreMUD::MainWindow::onSaveAsAction()
 
         qDebug () << fileNames;
     }
-}
-
-void MeagreMUD::MainWindow::onConnectAction()
-{
 }

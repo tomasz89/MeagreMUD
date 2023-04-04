@@ -53,4 +53,6 @@ void MeagreMUD::SettingsDialog::acceptSettings()
 {
     settings->setHost(hostLineEdit->text());
     settings->setPort(portSpinBox->value());
+
+    emit settingsUpdated(settings);
 }
