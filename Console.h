@@ -3,6 +3,12 @@
 
 #include <QPlainTextEdit>
 
+QT_BEGIN_NAMESPACE
+
+class QPalette;
+
+QT_END_NAMESPACE
+
 namespace MeagreMUD
 {
 class Console : public QPlainTextEdit
@@ -28,7 +34,7 @@ protected:
 
 private:
     bool localEchoEnabled;
-
+    QPalette *palette;
 };
 }
 

@@ -6,17 +6,18 @@
 
 MeagreMUD::Console::Console(QWidget *parent) :
     QPlainTextEdit(parent),
-    localEchoEnabled(false)
+    localEchoEnabled(false),
+    palette(new QPalette())
 {
     document()->setMaximumBlockCount(100);
-    QPalette p = palette();
-    p.setColor(QPalette::Base, Qt::black);
-    p.setColor(QPalette::Text, Qt::green);
-    setPalette(p);
+    palette->setColor(QPalette::Base, Qt::black);
+    palette->setColor(QPalette::Text, Qt::green);
+    setPalette(*palette);
 }
 
 MeagreMUD::Console::~Console()
 {
+    delete palette;
 }
 
 void MeagreMUD::Console::putData(const QByteArray &data)

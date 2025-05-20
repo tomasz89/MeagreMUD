@@ -11,7 +11,7 @@ MeagreMUD::Settings::Settings(QObject *parent) :
     QObject(parent),
     qSettings(new QSettings(this)),
     settingsFileName(),
-    hostName("greatermud.com"),
+    hostName("mud.paramud.com"),
     hostPort(23)
 {
 }
