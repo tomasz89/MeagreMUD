@@ -1,24 +1,20 @@
-cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.22)
 
-project(MeagreMUD VERSION 0.0.1 LANGUAGES CXX)
+include(cmake/MeagreMUDVersion.cmake)
+
+project(MeagreMUD
+    VERSION ${MEAGREMUD_VERSION}
+    DESCRIPTION "Open source MegaMUD clone"
+    LANGUAGES CXX
+)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Sql Widgets)
 qt_standard_project_setup()
 
-set(meagremud_SRCS
-    Console.cpp
-    MainWindow.cpp
-    main.cpp
-    Settings.cpp
-    SettingsDialog.cpp
-    terminalwidget.cpp
-)
-
-add_executable(meagremud ${meagremud_SRCS})
-target_link_libraries(meagremud Qt6::Widgets Qt6::Network)
-set_target_properties(meagremud PROPERTIES
-    WIN32_EXECUTABLE ON
-    MACOSX_BUNDLE ON)
+add_subdirectory(meagrelib)
+add_subdirectory(daemon)
+add_subdirectory(gui)
