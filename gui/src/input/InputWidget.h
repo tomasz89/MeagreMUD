@@ -1,84 +1,126 @@
 #pragma once
 
+/**
+ * @file InputWidget.h
+ * @brief Single-line command input bar with history and macro support.
+ */
+
 #include <QWidget>
 #include <QLineEdit>
 #include <QStringList>
 
-// ---------------------------------------------------------------------------
-// InputWidget
-//
-// Single-line text input bar for a character pane. Sits below the terminal.
-//
-// Behaviour:
-//   - Return / Enter submits the current text, appends \r\n, and clears
-//     the input field.
-//   - Submitted text is added to a local history ring (up to HISTORY_SIZE
-//     entries). Up/Down arrow keys navigate history exactly as a shell would:
-//     Up recalls older entries, Down returns toward the current draft.
-//   - While locked (resync, observer mode) the field is visually disabled
-//     and ignores Return/Enter.
-//   - Key macros: if the key combination matches a registered macro the
-//     macro text is sent immediately without touching the input field or
-//     history. Macro registration is handled externally via addMacro().
-//
-// The widget does NOT send anything to the network directly. It emits
-// textSubmitted(QString) and the owning CharacterPane / MainWindow forwards
-// it to DaemonConnectionManager.
-// ---------------------------------------------------------------------------
-
+/**
+ * @brief Single-line text input widget for a character pane.
+ *
+ * Sits below the TerminalWidget in each CharacterPane. Handles Return/Enter
+ * submission, command history navigation, and key macro interception.
+ *
+ * ## Behaviour
+ * - Return or Enter submits the current text, appends @c \\r\\n, adds it to
+ *   history, and clears the field.
+ * - Up/Down arrow keys navigate the command history ring (up to
+ *   HISTORY_SIZE entries). The current draft is saved when browsing begins
+ *   and restored when the user returns to the bottom.
+ * - Consecutive identical entries are deduplicated in the history.
+ * - While locked (resync or observer mode) the field is visually disabled
+ *   and ignores Return/Enter.
+ * - Key macros are checked before any other processing and fire regardless
+ *   of lock state. Macro text is submitted directly without touching the
+ *   input field or history.
+ *
+ * @see CharacterPane, DaemonConnectionManager
+ */
 class InputWidget : public QWidget
 {
     Q_OBJECT
 
 public:
+    /// Maximum number of entries retained in the command history ring.
     static constexpr int HISTORY_SIZE = 100;
 
+    /**
+     * @brief Construct the input widget.
+     * @param parent Qt parent widget.
+     */
     explicit InputWidget(QWidget *parent = nullptr);
 
-    // Lock/unlock the input field.
+    /**
+     * @brief Lock or unlock the input field.
+     *
+     * When locked, the QLineEdit is disabled and placeholder text changes
+     * to "(locked)". Key macros still fire when locked.
+     *
+     * @param locked @c true to lock; @c false to unlock.
+     */
     void setLocked(bool locked);
+
+    /// @return @c true if the input is currently locked.
     bool isLocked() const { return m_locked; }
 
-    // Register a key macro. key and modifiers are Qt::Key and
-    // Qt::KeyboardModifiers values. When the combination fires, macroText
-    // is emitted via textSubmitted() directly.
+    /**
+     * @brief Register a key macro.
+     *
+     * When the specified key combination is pressed, @p macroText is
+     * submitted immediately via textSubmitted() without affecting the input
+     * field or history.
+     *
+     * @param key        Qt::Key value.
+     * @param modifiers  Qt::KeyboardModifiers bitmask.
+     * @param macroText  Text to submit (should already include \\r\\n if needed;
+     *                   \\r\\n is appended automatically by submitText()).
+     */
     void addMacro(int key, Qt::KeyboardModifiers modifiers,
                   const QString &macroText);
+
+    /// Remove all registered key macros.
     void clearMacros();
 
-    // Programmatically set the input text (e.g. paste from attention panel).
+    /**
+     * @brief Programmatically set the input field text.
+     *
+     * Used to paste content (e.g. from the attention panel) without
+     * submitting it. Focus is moved to the input widget.
+     *
+     * @param text  Text to place in the field.
+     */
     void setText(const QString &text);
 
 signals:
-    // Emitted when the user submits text or a macro fires.
-    // Text has \r\n appended.
+    /**
+     * @brief Emitted when text is submitted by the user or a macro fires.
+     *
+     * @c \\r\\n is always appended before emission.
+     *
+     * @param text  The submitted text including trailing \\r\\n.
+     */
     void textSubmitted(const QString &text);
 
 private slots:
     void onReturnPressed();
 
 protected:
+    /// @cond INTERNAL
     bool eventFilter(QObject *watched, QEvent *event) override;
+    /// @endcond
 
 private:
+    /// Internal representation of a registered key macro.
     struct Macro {
-        int                    key;
-        Qt::KeyboardModifiers  modifiers;
-        QString                text;
+        int                   key;       ///< Qt::Key value.
+        Qt::KeyboardModifiers modifiers; ///< Required modifier bitmask.
+        QString               text;      ///< Text to submit on activation.
     };
 
     void historyUp();
     void historyDown();
     void submitText(const QString &text);
 
-    QLineEdit       *m_edit         = nullptr;
-    bool             m_locked       = false;
+    QLineEdit    *m_edit         = nullptr;
+    bool          m_locked       = false;
 
-    // Input history
-    QStringList      m_history;
-    int              m_historyIndex = -1;   // -1 = not browsing
-    QString          m_draft;               // saved current line while browsing
+    QStringList   m_history;             ///< Command history ring (oldest first).
+    int           m_historyIndex = -1;   ///< -1 = not currently browsing history.
+    QString       m_draft;               ///< Draft text saved when browsing begins.
 
-    // Key macros
-    QVector<Macro>   m_macros;
+    QVector<Macro> m_macros;             ///< Registered key macros.
 };

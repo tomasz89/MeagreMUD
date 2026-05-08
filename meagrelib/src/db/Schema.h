@@ -1,5 +1,28 @@
 #pragma once
 
+/**
+ * @file Schema.h
+ * @brief All SQL DDL for meagremud.db and seed.db as compile-time string constants.
+ *
+ * DatabaseManager uses Schema::ALL_CREATE_STATEMENTS[] to create the full
+ * schema on first run. The array is null-terminated and applied in order.
+ *
+ * ## Schema versioning
+ * @c db_schema_version is stored in the @c Meta table. Each integer version
+ * maps to a migration script applied in sequence by DatabaseManager. Current
+ * version: Schema::CURRENT_SCHEMA_VERSION.
+ *
+ * ## Dual-database architecture
+ * | Database | Tables | Access |
+ * |----------|--------|--------|
+ * | seed.db | Seeded_Room, Seeded_Monster, etc. + SeedMeta | Read-only |
+ * | meagremud.db | User tables + Seeded_* copies + Meta + views | Read-write |
+ *
+ * All world-knowledge queries use the @c v_* views that merge both layers.
+ *
+ * @see DatabaseManager
+ */
+
 // ---------------------------------------------------------------------------
 // Schema.h
 //

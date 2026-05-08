@@ -13,6 +13,4 @@ target_include_directories(meagrelib
         $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(meagrelib
-    PUBLIC  Qt6::Core Qt6::Network Qt6::Sql
-)
+target_link_libraries(meagrelib PUBLIC Qt6::Core Qt6::Network Qt6::Sql)

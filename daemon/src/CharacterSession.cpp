@@ -56,6 +56,14 @@ void CharacterSession::init()
     connect(m_mudSocket, &QTcpSocket::readyRead,
             this, &CharacterSession::onMudReadyRead);
 
+    // AnsiParser — created here on the session thread
+    m_ansiParser = new AnsiParser(this);
+
+    connect(m_ansiParser, &AnsiParser::runReady,
+            this, &CharacterSession::onRunReady);
+    connect(m_ansiParser, &AnsiParser::screenCleared,
+            this, &CharacterSession::onScreenCleared);
+
     qDebug() << "CharacterSession::init() character" << m_characterId
              << m_characterName << "on thread"
              << QThread::currentThread();
@@ -99,7 +107,11 @@ void CharacterSession::onMudDisconnected()
         return;
     }
 
-    // Unexpected disconnect — will reconnect
+    // Unexpected disconnect — reset parser state and reconnect
+    if (m_ansiParser != nullptr)
+    {
+        m_ansiParser->reset();
+    }
     setStatus(CharacterStatus::Reconnecting);
     qDebug() << "CharacterSession: character" << m_characterId
              << "disconnected — will reconnect";
@@ -118,11 +130,7 @@ void CharacterSession::onMudError(QAbstractSocket::SocketError error)
 void CharacterSession::onMudReadyRead()
 {
     const QByteArray data = m_mudSocket->readAll();
-
-    // TODO: feed data to AnsiParser
-    // For now just log the byte count
-    qDebug() << "CharacterSession: character" << m_characterId
-             << "received" << data.size() << "bytes from MUD";
+    m_ansiParser->onData(data);
 }
 
 // ---------------------------------------------------------------------------
@@ -150,4 +158,21 @@ void CharacterSession::connectToMud()
 
     setStatus(CharacterStatus::Connecting);
     m_mudSocket->connectToHost(m_mudHost, m_mudPort);
+}
+
+void CharacterSession::onRunReady(StyledRun run)
+{
+    // Forward to DaemonServer for broadcast to all GUIs.
+    // The signal crosses to the main thread via queued connection
+    // (CharacterSession lives on its own thread).
+    emit runReady(m_characterId, run);
+}
+
+void CharacterSession::onScreenCleared()
+{
+    // TODO: notify GUIs to clear their backbuffers.
+    // For now just log — the MSG_STYLED_RUN stream already handles
+    // display; a dedicated clear message will be added when needed.
+    qDebug() << "CharacterSession: character" << m_characterId
+             << "screen cleared (ESC[2J)";
 }

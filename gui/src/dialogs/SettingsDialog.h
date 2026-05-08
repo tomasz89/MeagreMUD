@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file SettingsDialog.h
+ * @brief Application settings dialog with six tabs.
+ */
+
 #include <QDialog>
 #include <QTabWidget>
 #include <QDialogButtonBox>
@@ -9,58 +14,109 @@
 #include <QLabel>
 #include <QSettings>
 
-// ---------------------------------------------------------------------------
-// SettingsDialog
-//
-// Single QDialog, six tabs, OK / Cancel / Apply.
-//
-// Tab 1 — Servers & Characters   (stub — backed by SQLite)
-// Tab 2 — Display                (stub — backed by SQLite)
-// Tab 3 — Key Macros             (stub — backed by SQLite)
-// Tab 4 — Triggers & Automation  (stub — backed by SQLite)
-// Tab 5 — Server Quirks          (stub — backed by SQLite)
-// Tab 6 — Daemon Connection      (FULLY IMPLEMENTED — backed by QSettings INI)
-//
-// Tab 6 stores only what is needed to reach the daemon:
-//   host, port, auth_token (optional).
-// All other configuration goes through SQLite via DatabaseManager.
-//
-// Usage:
-//   SettingsDialog dlg(this);
-//   if (dlg.exec() == QDialog::Accepted) { ... }
-//
-// Or open directly to a specific tab:
-//   dlg.setCurrentTab(SettingsDialog::Tab::DaemonConnection);
-//   dlg.exec();
-// ---------------------------------------------------------------------------
-
+/**
+ * @brief Application settings dialog.
+ *
+ * Single QDialog with six tabs and OK / Cancel / Apply buttons. Tab 6
+ * (Daemon Connection) is fully implemented and backed by QSettings INI.
+ * Tabs 1–5 are stubs pending SQLite-backed implementation.
+ *
+ * ## Tab summary
+ * | # | Name | Status | Backend |
+ * |---|------|--------|---------|
+ * | 1 | Servers & Characters | Stub | SQLite |
+ * | 2 | Display | Stub | SQLite |
+ * | 3 | Key Macros | Stub | SQLite |
+ * | 4 | Triggers & Automation | Stub | SQLite |
+ * | 5 | Server Quirks | Stub | SQLite |
+ * | 6 | Daemon Connection | **Implemented** | QSettings INI |
+ *
+ * Tab 6 stores only what is needed to reach the daemon: host, port, and
+ * an optional authentication token. All other configuration is managed via
+ * DatabaseManager by the daemon.
+ *
+ * ## Usage
+ * @code
+ * SettingsDialog dlg(this);
+ * connect(&dlg, &SettingsDialog::daemonConnectionChanged,
+ *         this, &MyClass::onDaemonSettingsChanged);
+ * dlg.exec();
+ * @endcode
+ *
+ * To open directly to a specific tab:
+ * @code
+ * dlg.setCurrentTab(SettingsDialog::Tab::DaemonConnection);
+ * dlg.exec();
+ * @endcode
+ *
+ * Saved settings can be read without opening the dialog:
+ * @code
+ * QString host = SettingsDialog::savedHost();
+ * quint16 port = SettingsDialog::savedPort();
+ * @endcode
+ *
+ * @see DaemonConnectionManager, MainWindow
+ */
 class SettingsDialog : public QDialog
 {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Identifies each tab by logical name rather than index.
+     */
     enum class Tab {
-        ServersAndCharacters = 0,
-        Display              = 1,
-        KeyMacros            = 2,
-        TriggersAndAutomation = 3,
-        ServerQuirks         = 4,
-        DaemonConnection     = 5,
+        ServersAndCharacters  = 0, ///< Server and character configuration (stub).
+        Display               = 1, ///< Display and palette settings (stub).
+        KeyMacros             = 2, ///< Key macro bindings (stub).
+        TriggersAndAutomation = 3, ///< Trigger groups and automation (stub).
+        ServerQuirks          = 4, ///< Per-server quirk key/value table (stub).
+        DaemonConnection      = 5, ///< Daemon host, port, and auth (implemented).
     };
 
+    /**
+     * @brief Construct the dialog.
+     * @param parent Qt parent widget.
+     */
     explicit SettingsDialog(QWidget *parent = nullptr);
 
+    /**
+     * @brief Switch to a specific tab programmatically.
+     * @param tab  Tab to show.
+     */
     void setCurrentTab(Tab tab);
 
-    // Read the stored daemon connection settings without opening the dialog.
-    // Returns defaults if nothing has been saved yet.
+    /**
+     * @brief Read the saved daemon host without opening the dialog.
+     * @return Saved host, or @c "127.0.0.1" if not yet configured.
+     */
     static QString savedHost();
+
+    /**
+     * @brief Read the saved daemon port without opening the dialog.
+     * @return Saved port, or 7777 if not yet configured.
+     */
     static quint16 savedPort();
+
+    /**
+     * @brief Read the saved authentication token without opening the dialog.
+     * @return Saved token, or an empty string if not set.
+     */
     static QString savedAuthToken();
-    static bool    savedAuthRequired();
+
+    /**
+     * @brief Whether the daemon requires authentication.
+     * @return @c true if auth is required.
+     */
+    static bool savedAuthRequired();
 
 signals:
-    // Emitted when the user accepts and daemon connection settings have changed.
+    /**
+     * @brief Emitted when daemon connection settings are saved (OK or Apply).
+     *
+     * Only emitted if at least one value actually changed. MainWindow
+     * connects to this to notify the user that a reconnect may be needed.
+     */
     void daemonConnectionChanged();
 
 private slots:
@@ -68,7 +124,6 @@ private slots:
     void onApply();
 
 private:
-    // Tab builders
     QWidget *buildServersAndCharactersTab();
     QWidget *buildDisplayTab();
     QWidget *buildKeyMacrosTab();
@@ -76,31 +131,28 @@ private:
     QWidget *buildServerQuirksTab();
     QWidget *buildDaemonConnectionTab();
 
-    // Populate Tab 6 widgets from QSettings
     void loadDaemonConnectionSettings();
-
-    // Persist Tab 6 widgets to QSettings. Returns true if any value changed.
     bool saveDaemonConnectionSettings();
 
-    // Helpers
     static QSettings makeSettings();
 
-    QTabWidget        *m_tabs       = nullptr;
-    QDialogButtonBox  *m_buttons    = nullptr;
+    QTabWidget       *m_tabs    = nullptr; ///< The six-tab widget.
+    QDialogButtonBox *m_buttons = nullptr; ///< OK / Cancel / Apply buttons.
 
     // Tab 6 widgets
-    QLineEdit  *m_hostEdit      = nullptr;
-    QSpinBox   *m_portSpin      = nullptr;
-    QCheckBox  *m_authCheck     = nullptr;
-    QLineEdit  *m_tokenEdit     = nullptr;
-    QLabel     *m_tokenLabel    = nullptr;
+    QLineEdit *m_hostEdit   = nullptr; ///< Daemon hostname/IP input.
+    QSpinBox  *m_portSpin   = nullptr; ///< Daemon port spinbox.
+    QCheckBox *m_authCheck  = nullptr; ///< "Require authentication" checkbox.
+    QLineEdit *m_tokenEdit  = nullptr; ///< Auth token input (password echo).
+    QLabel    *m_tokenLabel = nullptr; ///< Label for the token field.
 
-    // QSettings keys
-    static constexpr const char *KEY_HOST         = "daemon/host";
-    static constexpr const char *KEY_PORT         = "daemon/port";
-    static constexpr const char *KEY_AUTH_REQUIRED = "daemon/auth_required";
-    static constexpr const char *KEY_AUTH_TOKEN   = "daemon/auth_token";
+    /// @name QSettings keys for Tab 6
+    /// @{
+    static constexpr const char *KEY_HOST          = "daemon/host";          ///< Daemon hostname.
+    static constexpr const char *KEY_PORT          = "daemon/port";          ///< Daemon port.
+    static constexpr const char *KEY_AUTH_REQUIRED = "daemon/auth_required"; ///< Auth flag.
+    static constexpr const char *KEY_AUTH_TOKEN    = "daemon/auth_token";    ///< Auth token.
+    /// @}
 
-
-    static constexpr quint16     DEFAULT_PORT      = 7777;
+    static constexpr quint16 DEFAULT_PORT = 7777; ///< Default port when nothing is saved.
 };

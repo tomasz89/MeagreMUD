@@ -8,6 +8,8 @@ qt_add_executable(meagre-daemon
     src/CharacterSession.cpp
     src/CharacterRegistry.h
     src/CharacterRegistry.cpp
+    src/AnsiParser.h
+    src/AnsiParser.cpp
 )
 
 target_link_libraries(meagre-daemon
@@ -19,7 +21,6 @@ target_link_libraries(meagre-daemon
 
 target_include_directories(meagre-daemon PRIVATE src)
 
-# Daemon is a console application on all platforms
 set_target_properties(meagre-daemon PROPERTIES
     WIN32_EXECUTABLE FALSE
 )
