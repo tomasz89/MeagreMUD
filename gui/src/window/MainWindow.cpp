@@ -68,17 +68,17 @@ void MainWindow::setupMenuBar()
     // Tools menu
     QMenu *toolsMenu = menuBar()->addMenu(QStringLiteral("&Tools"));
 
-    QAction *pathEditorAction = toolsMenu->addAction(
+    m_pathEditorAction = toolsMenu->addAction(
         QStringLiteral("&Path Editor…"));
-    connect(pathEditorAction, &QAction::triggered,
+    connect(m_pathEditorAction, &QAction::triggered,
             this, &MainWindow::onActionPathEditor);
 
     toolsMenu->addSeparator();
 
-    QAction *settingsAction = toolsMenu->addAction(
+    m_settingsAction = toolsMenu->addAction(
         QStringLiteral("&Settings…"));
-    settingsAction->setShortcut(QKeySequence::Preferences);
-    connect(settingsAction, &QAction::triggered,
+    m_settingsAction->setShortcut(QKeySequence::Preferences);
+    connect(m_settingsAction, &QAction::triggered,
             this, &MainWindow::onActionSettings);
 
     // Help menu
@@ -473,6 +473,8 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
             m_statusLabel->setText(QStringLiteral("Disconnected"));
             m_connectAction->setEnabled(true);
             m_disconnectAction->setEnabled(false);
+            m_pathEditorAction->setEnabled(false);
+            m_settingsAction->setEnabled(false);
             break;
 
         case DaemonConnectionManager::State::Connecting:
@@ -482,6 +484,8 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                     .arg(m_connectionManager.port()));
             m_connectAction->setEnabled(false);
             m_disconnectAction->setEnabled(false);
+            m_pathEditorAction->setEnabled(false);
+            m_settingsAction->setEnabled(false);
             break;
 
         case DaemonConnectionManager::State::Syncing:
@@ -491,6 +495,8 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                     .arg(m_connectionManager.port()));
             m_connectAction->setEnabled(false);
             m_disconnectAction->setEnabled(false);
+            m_pathEditorAction->setEnabled(false);
+            m_settingsAction->setEnabled(false);
             break;
 
         case DaemonConnectionManager::State::Connected:
@@ -511,6 +517,8 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                     .arg(controlLabel));
             m_connectAction->setEnabled(false);
             m_disconnectAction->setEnabled(true);
+            m_pathEditorAction->setEnabled(true);
+            m_settingsAction->setEnabled(true);
             break;
         }
     }

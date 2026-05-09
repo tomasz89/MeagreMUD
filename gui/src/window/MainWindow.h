@@ -174,8 +174,10 @@ private:
     AttentionPanel *m_attentionPanel = nullptr; ///< Collapsible event drawer.
     QLabel         *m_statusLabel    = nullptr; ///< Global status bar label.
 
-    QAction *m_connectAction    = nullptr; ///< Enabled only when Disconnected.
-    QAction *m_disconnectAction = nullptr; ///< Enabled only when Connected.
+    QAction *m_connectAction     = nullptr; ///< Enabled only when Disconnected.
+    QAction *m_disconnectAction  = nullptr; ///< Enabled only when Connected.
+    QAction *m_pathEditorAction  = nullptr; ///< Enabled only when Connected.
+    QAction *m_settingsAction    = nullptr; ///< Enabled only when Connected.
 
     DaemonConnectionManager m_connectionManager; ///< Owns the daemon TCP socket.
     int m_resyncCountDisplayed = 0; ///< Last resync count shown to the user.
