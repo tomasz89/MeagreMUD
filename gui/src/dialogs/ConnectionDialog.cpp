@@ -12,8 +12,10 @@
 // Construction
 // ---------------------------------------------------------------------------
 
-ConnectionDialog::ConnectionDialog(QWidget *parent)
+ConnectionDialog::ConnectionDialog(DaemonConnectionManager::State currentState,
+                                   QWidget *parent)
     : QDialog(parent)
+    , m_currentState(currentState)
 {
     setWindowTitle(QStringLiteral("Daemon Connection"));
     setMinimumSize(400, 300);
@@ -79,13 +81,14 @@ ConnectionDialog::ConnectionDialog(QWidget *parent)
     m_buttons = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
         this);
+    m_okButton = m_buttons->button(QDialogButtonBox::Ok);
     auto *saveButton = new QPushButton(QStringLiteral("Save"), this);
     m_saveButton = saveButton;
     m_buttons->addButton(saveButton, QDialogButtonBox::ActionRole);
-    auto *connectButton = m_buttons->addButton(QStringLiteral("Connect"),
-                                               QDialogButtonBox::ActionRole);
-    auto *disconnectButton = m_buttons->addButton(QStringLiteral("Disconnect"),
-                                                  QDialogButtonBox::ActionRole);
+    m_connectButton = m_buttons->addButton(QStringLiteral("Connect"),
+                                           QDialogButtonBox::ActionRole);
+    m_disconnectButton = m_buttons->addButton(QStringLiteral("Disconnect"),
+                                              QDialogButtonBox::ActionRole);
     layout->addWidget(m_buttons);
 
     // Connections
@@ -94,9 +97,9 @@ ConnectionDialog::ConnectionDialog(QWidget *parent)
     connect(addButton, &QPushButton::clicked, this, &ConnectionDialog::onAddProfile);
     connect(removeButton, &QPushButton::clicked, this, &ConnectionDialog::onRemoveProfile);
     connect(saveButton, &QPushButton::clicked, this, &ConnectionDialog::onSaveProfile);
-    connect(connectButton, &QPushButton::clicked, this, &ConnectionDialog::onConnect);
-    connect(disconnectButton, &QPushButton::clicked, this, &ConnectionDialog::onDisconnect);
-    connect(m_buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(m_connectButton, &QPushButton::clicked, this, &ConnectionDialog::onConnect);
+    connect(m_disconnectButton, &QPushButton::clicked, this, &ConnectionDialog::onDisconnect);
+    connect(m_buttons, &QDialogButtonBox::accepted, this, &ConnectionDialog::onOkClicked);
     connect(m_buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     // Update token visibility and save button state
@@ -233,6 +236,27 @@ void ConnectionDialog::onDisconnect()
 // Private
 // ---------------------------------------------------------------------------
 
+void ConnectionDialog::onOkClicked()
+{
+    const QString profile = m_profileCombo->currentText();
+    if (profile.isEmpty())
+    {
+        accept();
+        return;
+    }
+
+    // Always save current field values
+    saveProfileSettings(profile);
+
+    // If disconnected, also initiate connection
+    if (m_currentState == DaemonConnectionManager::State::Disconnected)
+    {
+        emit connectRequested(profile);
+    }
+
+    accept();
+}
+
 void ConnectionDialog::loadProfiles()
 {
     QSettings s = makeSettings();
@@ -304,12 +328,42 @@ bool ConnectionDialog::currentSettingsMatchSaved() const
 
 void ConnectionDialog::updateButtonStates()
 {
-    bool hasProfiles = !m_profiles.isEmpty();
-    if (m_removeButton) {
+    const bool hasProfiles = !m_profiles.isEmpty();
+    const bool isDisconnected =
+        (m_currentState == DaemonConnectionManager::State::Disconnected);
+    const bool isConnected =
+        (m_currentState == DaemonConnectionManager::State::Connected);
+
+    if (m_removeButton)
+    {
         m_removeButton->setEnabled(hasProfiles);
     }
-    if (m_saveButton) {
+    if (m_saveButton)
+    {
         m_saveButton->setEnabled(hasProfiles && !currentSettingsMatchSaved());
+    }
+    if (m_connectButton)
+    {
+        // Connect only makes sense when fully disconnected
+        m_connectButton->setEnabled(hasProfiles && isDisconnected);
+    }
+    if (m_disconnectButton)
+    {
+        // Disconnect aborts any non-disconnected state (Connecting, Syncing, Connected)
+        m_disconnectButton->setEnabled(!isDisconnected);
+    }
+
+    if (m_okButton)
+    {
+        // Label changes to make the action clear
+        if (isDisconnected)
+        {
+            m_okButton->setText(QStringLiteral("Save && Connect"));
+        }
+        else
+        {
+            m_okButton->setText(QStringLiteral("Save"));
+        }
     }
 }
 

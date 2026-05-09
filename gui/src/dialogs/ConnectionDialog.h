@@ -15,6 +15,7 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QVBoxLayout>
+#include "connection/DaemonConnectionManager.h"
 #include <QHBoxLayout>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -34,7 +35,8 @@ public:
      * @brief Construct the connection dialog.
      * @param parent Qt parent widget.
      */
-    explicit ConnectionDialog(QWidget *parent = nullptr);
+    explicit ConnectionDialog(DaemonConnectionManager::State currentState,
+                               QWidget *parent = nullptr);
 
     ~ConnectionDialog() override;
 
@@ -57,6 +59,7 @@ private slots:
     void onSaveProfile();
     void onConnect();
     void onDisconnect();
+    void onOkClicked();
 
 private:
     void loadProfiles();
@@ -76,7 +79,12 @@ private:
     QCheckBox *m_authCheck    = nullptr;
     QLineEdit  *m_tokenEdit    = nullptr;
     QLabel    *m_tokenLabel   = nullptr;
-    QDialogButtonBox *m_buttons = nullptr;
+    QDialogButtonBox *m_buttons          = nullptr;
+    QPushButton      *m_okButton         = nullptr;
+    QPushButton      *m_connectButton    = nullptr;
+    QPushButton      *m_disconnectButton = nullptr;
+    DaemonConnectionManager::State m_currentState
+        = DaemonConnectionManager::State::Disconnected;
 
     QStringList m_profiles;
 

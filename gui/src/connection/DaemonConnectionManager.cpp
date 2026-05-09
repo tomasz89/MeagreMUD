@@ -60,6 +60,17 @@ void DaemonConnectionManager::disconnectFromDaemon()
     }
 
     m_pingTimer.stop();
+
+    if (m_state == State::Connecting)
+    {
+        // Socket is mid-connect — abort() fires disconnected() immediately.
+        // disconnectFromHost() may silently succeed without a signal when
+        // the connection has not yet been established.
+        m_socket.abort();
+        setState(State::Disconnected);
+        return;
+    }
+
     sendGoodbye(GoodbyeReason::UserDisconnect);
     m_socket.disconnectFromHost();
     // onSocketDisconnected() will call setState(Disconnected)
@@ -184,8 +195,19 @@ void DaemonConnectionManager::handleFrame(quint8 msgType, quint8 characterId,
 
     switch (msgType)
     {
+        case MSG_PING:
+            // Daemon is pinging us — send pong back immediately
+            sendFrame(MSG_PONG, CHARACTER_ID_DAEMON, QByteArray());
+            return;
+
         case MSG_PONG:
             // Keepalive reply — no action needed
+            return;
+
+        case MSG_GOODBYE:
+            // Daemon is shutting down or disconnecting cleanly
+            m_pingTimer.stop();
+            setState(State::Disconnected);
             return;
 
         case MSG_RESYNC_ACK:

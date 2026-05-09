@@ -39,7 +39,14 @@ MainWindow::MainWindow(QWidget *parent)
     updateConnectionUi(DaemonConnectionManager::State::Disconnected);
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow()
+{
+    // Disconnect cleanly before Qt tears down the socket and event loop.
+    // DaemonConnectionManager is a value member — its destructor would
+    // otherwise call sendGoodbye() during object teardown when the
+    // underlying socket may already be in an invalid state.
+    m_connectionManager.disconnectFromDaemon();
+}
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -127,12 +134,10 @@ void MainWindow::setupStatusBar()
 
 void MainWindow::onActionConnect()
 {
-    if (m_connectionManager.state() != DaemonConnectionManager::State::Disconnected)
-    {
-        return;
-    }
-
-    ConnectionDialog dlg(this);
+    // Always open the dialog regardless of state. The dialog's Connect
+    // button is disabled when already connected; its Disconnect button
+    // lets the user abort a stuck connecting/syncing attempt.
+    ConnectionDialog dlg(m_connectionManager.state(), this);
     connect(&dlg, &ConnectionDialog::connectRequested,
             this, &MainWindow::onConnectRequested);
     connect(&dlg, &ConnectionDialog::disconnectRequested,
@@ -276,6 +281,18 @@ void MainWindow::onFrameReceived(quint8 msgType, quint8 characterId,
         case MSG_ENGINE_STATUS:
             handleEngineStatus(characterId, payload);
             break;
+
+        case MSG_PING:
+            // Should be handled by DaemonConnectionManager — ignore if it leaks through
+            return;
+
+        case MSG_PONG:
+            // Keepalive — no action needed
+            return;
+
+        case MSG_GOODBYE:
+            // Daemon disconnecting — DaemonConnectionManager handles state transition
+            return;
 
         default:
             qDebug() << "MainWindow: unhandled message type"
@@ -482,8 +499,8 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                 QStringLiteral("Connecting to %1:%2…")
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port()));
-            m_connectAction->setEnabled(false);
-            m_disconnectAction->setEnabled(false);
+            m_connectAction->setEnabled(true);
+            m_disconnectAction->setEnabled(true);
             m_pathEditorAction->setEnabled(false);
             m_settingsAction->setEnabled(false);
             break;
@@ -493,8 +510,8 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                 QStringLiteral("Syncing with %1:%2…")
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port()));
-            m_connectAction->setEnabled(false);
-            m_disconnectAction->setEnabled(false);
+            m_connectAction->setEnabled(true);
+            m_disconnectAction->setEnabled(true);
             m_pathEditorAction->setEnabled(false);
             m_settingsAction->setEnabled(false);
             break;
@@ -515,7 +532,7 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port())
                     .arg(controlLabel));
-            m_connectAction->setEnabled(false);
+            m_connectAction->setEnabled(true);
             m_disconnectAction->setEnabled(true);
             m_pathEditorAction->setEnabled(true);
             m_settingsAction->setEnabled(true);

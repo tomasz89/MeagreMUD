@@ -53,6 +53,7 @@ public:
      */
     explicit MainWindow(QWidget *parent = nullptr);
 
+    /// Disconnects cleanly from the daemon before Qt tears down the socket.
     ~MainWindow() override;
 
 private slots:
