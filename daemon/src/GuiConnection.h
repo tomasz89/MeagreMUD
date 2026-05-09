@@ -66,6 +66,11 @@ public:
     QString peerAddress() const;
 
     /**
+     * @brief Sets the number of active characters reported in ServerHello.
+     */
+    void setCharacterCount(int count) { m_characterCount = count; }
+
+    /**
      * @brief Sets or clears the controller role without sending a protocol message.
      *
      * Use sendControlGranted() / sendControlRevoked() to both update the flag
@@ -136,7 +141,20 @@ signals:
      * @param text        Input text (already @c \\r\\n terminated).
      */
     void inputReceived(quint8 characterId, const QString &text);
+    /**
+     * @brief Emitted when the controller requests an engine mode change.
+     */
+    void engineModeRequested(quint8 characterId, EngineMode mode);
 
+    /**
+     * @brief Emitted when the controller requests an attention event be cleared.
+     */
+    void clearAttentionRequested(quint8 characterId, quint16 eventId);
+
+    /**
+     * @brief Emitted when the controller requests session statistics reset.
+     */
+    void statsResetRequested(quint8 characterId);
     /**
      * @brief Emitted when the GUI sends MSG_RESYNC_REQUEST.
      *
@@ -228,6 +246,20 @@ private:
     void handleSetEngineMode(quint8 characterId, const QByteArray &payload);
 
     /**
+     * @brief Handles MSG_SET_ACTIVE_PATH.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleSetActivePath(quint8 characterId, const QByteArray &payload);
+
+    /**
+     * @brief Handles MSG_PREFLIGHT_REQUEST.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handlePreflightRequest(quint8 characterId, const QByteArray &payload);
+
+    /**
      * @brief Handles MSG_CLEAR_ATTENTION.
      * @param characterId Target character.
      * @param payload     Raw frame payload.
@@ -235,11 +267,53 @@ private:
     void handleClearAttention(quint8 characterId, const QByteArray &payload);
 
     /**
+     * @brief Handles MSG_STEP_OVERRIDE.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleStepOverride(quint8 characterId, const QByteArray &payload);
+
+    /**
+     * @brief Handles MSG_ABORT_PATH.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleAbortPath(quint8 characterId, const QByteArray &payload);
+
+    /**
+     * @brief Handles MSG_SET_COMBAT_FLAG.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleSetCombatFlag(quint8 characterId, const QByteArray &payload);
+
+    /**
      * @brief Handles MSG_STATS_RESET.
      * @param characterId Target character.
      * @param payload     Raw frame payload (unused currently).
      */
     void handleStatsReset(quint8 characterId, const QByteArray &payload);
+
+    /**
+     * @brief Handles MSG_RECORDING_START.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleRecordingStart(quint8 characterId, const QByteArray &payload);
+
+    /**
+     * @brief Handles MSG_RECORDING_STEP.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleRecordingStep(quint8 characterId, const QByteArray &payload);
+
+    /**
+     * @brief Handles MSG_RECORDING_STOP.
+     * @param characterId Target character.
+     * @param payload     Raw frame payload.
+     */
+    void handleRecordingStop(quint8 characterId, const QByteArray &payload);
 
     /**
      * @brief Sends MSG_PROTOCOL_ERROR with @p code and @p description.
@@ -276,6 +350,7 @@ private:
     bool        m_isController    = false;       ///< True if this GUI is the controller.
     bool        m_resyncComplete  = false;       ///< True after DaemonServer sends the full dump.
     bool        m_helloReceived   = false;       ///< True after a valid ClientHello.
+    int         m_characterCount  = 0;           ///< Number of characters sent in ServerHello.
 
     QByteArray  m_rxBuffer;                      ///< Inbound frame reassembly buffer.
     quint16     m_txSequence = 0;                ///< Outbound frame sequence counter.

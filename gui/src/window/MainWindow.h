@@ -73,6 +73,12 @@ private slots:
     /// Notifies the user if a reconnect is needed.
     void onDaemonConnectionSettingsChanged();
 
+    /// Called when ConnectionDialog requests connect with a profile.
+    void onConnectRequested(const QString &profile);
+
+    /// Called when ConnectionDialog requests disconnect.
+    void onDisconnectRequested();
+
     /// Show the About dialog.
     void onActionAbout();
 
@@ -137,6 +143,7 @@ private:
     /// @{
     void handleCharacterInfo(quint8 characterId, const QByteArray &payload);
     void handleCharacterInfoEnd(quint8 characterId);
+    void handleServerHello(quint8 characterId, const QByteArray &payload);
     void handleStatusChange(quint8 characterId, const QByteArray &payload);
     void handleStyledRun(quint8 characterId, const QByteArray &payload);
     void handleServerMessage(quint8 characterId, const QByteArray &payload);

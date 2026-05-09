@@ -27,7 +27,15 @@ CharacterRegistry::~CharacterRegistry()
 // ---------------------------------------------------------------------------
 
 CharacterSession *CharacterRegistry::addSession(quint8 characterId,
-                                                const QString &characterName)
+                                                const QString &characterName,
+                                                int characterDbId,
+                                                const QString &mudHost,
+                                                quint16 mudPort,
+                                                const QString &loginUsername,
+                                                const QString &loginPassword,
+                                                bool autoReconnect,
+                                                quint8 serverProfileId,
+                                                quint8 instanceId)
 {
     if (m_sessions.contains(characterId))
     {
@@ -38,6 +46,12 @@ CharacterSession *CharacterRegistry::addSession(quint8 characterId,
 
     auto *session = new CharacterSession(characterId, characterName);
     auto *thread  = new QThread(this);
+
+    session->setDatabaseId(characterDbId);
+    session->setConnectionInfo(mudHost, mudPort, loginUsername,
+                               loginPassword, autoReconnect);
+    session->setServerProfileId(serverProfileId);
+    session->setInstanceId(instanceId);
 
     thread->setObjectName(
         QStringLiteral("SessionThread-%1-%2")

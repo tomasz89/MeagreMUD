@@ -8,8 +8,7 @@
 #include <QMessageBox>
 #include <QDebug>
 
-#include "protocol/Protocol.h"
-#include "types/MudTypes.h"
+#include "dialogs/ConnectionDialog.h"
 
 // ---------------------------------------------------------------------------
 // Construction
@@ -133,25 +132,24 @@ void MainWindow::onActionConnect()
         return;
     }
 
-    const QString host = SettingsDialog::savedHost();
-    const quint16 port = SettingsDialog::savedPort();
+    ConnectionDialog dlg(this);
+    connect(&dlg, &ConnectionDialog::connectRequested,
+            this, &MainWindow::onConnectRequested);
+    connect(&dlg, &ConnectionDialog::disconnectRequested,
+            this, &MainWindow::onDisconnectRequested);
+    dlg.exec();
+}
 
-    if (host.isEmpty())
-    {
-        // No host configured yet -- open settings at the daemon connection tab
-        SettingsDialog dlg(this);
-        connect(&dlg, &SettingsDialog::daemonConnectionChanged,
-                this, &MainWindow::onDaemonConnectionSettingsChanged);
-        dlg.setCurrentTab(SettingsDialog::Tab::DaemonConnection);
-        if (dlg.exec() != QDialog::Accepted)
-        {
-            return;
-        }
-    }
-
+void MainWindow::onConnectRequested(const QString &profile)
+{
     m_connectionManager.connectToDaemon(
-        SettingsDialog::savedHost(),
-        SettingsDialog::savedPort());
+        SettingsDialog::savedHost(profile),
+        SettingsDialog::savedPort(profile));
+}
+
+void MainWindow::onDisconnectRequested()
+{
+    m_connectionManager.disconnectFromDaemon();
 }
 void MainWindow::onActionDisconnect()
 {
@@ -254,6 +252,10 @@ void MainWindow::onFrameReceived(quint8 msgType, quint8 characterId,
 
     switch (msgType)
     {
+        case MSG_SERVER_HELLO:
+            handleServerHello(characterId, payload);
+            break;
+
         case MSG_CHARACTER_INFO:
             handleCharacterInfo(characterId, payload);
             break;
@@ -326,6 +328,25 @@ void MainWindow::handleCharacterInfoEnd(quint8 characterId)
     Q_UNUSED(characterId)
     // All CharacterInfo messages for the resync dump have been received.
     // Nothing to do at this level — panes are already created.
+}
+
+void MainWindow::handleServerHello(quint8 characterId,
+                                   const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    if (payload.size() < 3)
+    {
+        qWarning() << "MainWindow: malformed MSG_SERVER_HELLO payload";
+        return;
+    }
+
+    const quint8 protocolVersion = static_cast<quint8>(payload[0]);
+    const quint8 serverFlags     = static_cast<quint8>(payload[1]);
+    const quint8 numCharacters   = static_cast<quint8>(payload[2]);
+
+    qDebug() << "MainWindow: ServerHello received — protocol v" << protocolVersion
+             << ", flags" << Qt::hex << serverFlags
+             << ", characters:" << numCharacters;
 }
 
 void MainWindow::handleStatusChange(quint8 characterId,

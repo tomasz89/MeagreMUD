@@ -18,6 +18,8 @@ qt_add_executable(meagre-gui
     src/input/InputWidget.cpp
     src/dialogs/SettingsDialog.h
     src/dialogs/SettingsDialog.cpp
+    src/dialogs/ConnectionDialog.h
+    src/dialogs/ConnectionDialog.cpp
 )
 
 target_link_libraries(meagre-gui

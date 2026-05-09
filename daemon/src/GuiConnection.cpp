@@ -258,12 +258,44 @@ void GuiConnection::handleFrame(quint8 msgType, quint8 characterId,
             handleSetEngineMode(characterId, payload);
             return;
 
+        case MSG_SET_ACTIVE_PATH:
+            handleSetActivePath(characterId, payload);
+            return;
+
+        case MSG_PREFLIGHT_REQUEST:
+            handlePreflightRequest(characterId, payload);
+            return;
+
         case MSG_CLEAR_ATTENTION:
             handleClearAttention(characterId, payload);
             return;
 
+        case MSG_STEP_OVERRIDE:
+            handleStepOverride(characterId, payload);
+            return;
+
+        case MSG_ABORT_PATH:
+            handleAbortPath(characterId, payload);
+            return;
+
+        case MSG_SET_COMBAT_FLAG:
+            handleSetCombatFlag(characterId, payload);
+            return;
+
         case MSG_STATS_RESET:
             handleStatsReset(characterId, payload);
+            return;
+
+        case MSG_RECORDING_START:
+            handleRecordingStart(characterId, payload);
+            return;
+
+        case MSG_RECORDING_STEP:
+            handleRecordingStep(characterId, payload);
+            return;
+
+        case MSG_RECORDING_STOP:
+            handleRecordingStop(characterId, payload);
             return;
 
         default:
@@ -364,13 +396,13 @@ void GuiConnection::handleInput(quint8 characterId, const QByteArray &payload)
 void GuiConnection::handleSetEngineMode(quint8 characterId,
                                         const QByteArray &payload)
 {
-    if (!m_isController || !m_resyncComplete || payload.size() < 2)
+    if (!m_isController || !m_resyncComplete || payload.size() < 1)
     {
         return;
     }
 
-    // TODO: forward to CharacterRegistry → CharacterSession → PathEngine
-    Q_UNUSED(characterId)
+    const EngineMode mode = static_cast<EngineMode>(static_cast<quint8>(payload[0]));
+    emit engineModeRequested(characterId, mode);
 }
 
 void GuiConnection::handleClearAttention(quint8 characterId,
@@ -381,8 +413,9 @@ void GuiConnection::handleClearAttention(quint8 characterId,
         return;
     }
 
-    // TODO: forward to CharacterRegistry → CharacterSession
-    Q_UNUSED(characterId)
+    const quint16 eventId = static_cast<quint8>(payload[1])
+                          | (static_cast<quint8>(payload[2]) << 8u);
+    emit clearAttentionRequested(characterId, eventId);
 }
 
 void GuiConnection::handleStatsReset(quint8 characterId,
@@ -394,8 +427,111 @@ void GuiConnection::handleStatsReset(quint8 characterId,
         return;
     }
 
-    // TODO: forward to CharacterRegistry → CharacterSession → PathEngine
+    emit statsResetRequested(characterId);
+}
+
+void GuiConnection::handleSetActivePath(quint8 characterId,
+                                        const QByteArray &payload)
+{
     Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_SET_ACTIVE_PATH received but not implemented yet";
+}
+
+void GuiConnection::handlePreflightRequest(quint8 characterId,
+                                           const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_PREFLIGHT_REQUEST received but not implemented yet";
+}
+
+void GuiConnection::handleStepOverride(quint8 characterId,
+                                       const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_STEP_OVERRIDE received but not implemented yet";
+}
+
+void GuiConnection::handleAbortPath(quint8 characterId,
+                                    const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_ABORT_PATH received but not implemented yet";
+}
+
+void GuiConnection::handleSetCombatFlag(quint8 characterId,
+                                        const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_SET_COMBAT_FLAG received but not implemented yet";
+}
+
+void GuiConnection::handleRecordingStart(quint8 characterId,
+                                         const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_RECORDING_START received but not implemented yet";
+}
+
+void GuiConnection::handleRecordingStep(quint8 characterId,
+                                        const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_RECORDING_STEP received but not implemented yet";
+}
+
+void GuiConnection::handleRecordingStop(quint8 characterId,
+                                        const QByteArray &payload)
+{
+    Q_UNUSED(characterId)
+    Q_UNUSED(payload)
+    if (!m_isController || !m_resyncComplete)
+    {
+        return;
+    }
+
+    qDebug() << "GuiConnection: MSG_RECORDING_STOP received but not implemented yet";
 }
 
 // ---------------------------------------------------------------------------
@@ -427,7 +563,7 @@ void GuiConnection::sendServerHello()
     QByteArray payload;
     payload.append(static_cast<char>(PROTOCOL_VERSION));
     payload.append(static_cast<char>(0x00)); // server_flags — no auth required yet
-    payload.append(static_cast<char>(0));    // num_characters (0 at hello time)
+    payload.append(static_cast<char>(m_characterCount & 0xFF));
     sendFrame(MSG_SERVER_HELLO, CHARACTER_ID_DAEMON, payload);
 }
 

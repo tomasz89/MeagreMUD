@@ -12,6 +12,7 @@
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QLabel>
+#include <QComboBox>
 #include <QSettings>
 
 /**
@@ -88,27 +89,31 @@ public:
 
     /**
      * @brief Read the saved daemon host without opening the dialog.
+     * @param profile The profile name.
      * @return Saved host, or @c "127.0.0.1" if not yet configured.
      */
-    static QString savedHost();
+    static QString savedHost(const QString &profile = QStringLiteral("Default"));
 
     /**
      * @brief Read the saved daemon port without opening the dialog.
+     * @param profile The profile name.
      * @return Saved port, or 7777 if not yet configured.
      */
-    static quint16 savedPort();
+    static quint16 savedPort(const QString &profile = QStringLiteral("Default"));
 
     /**
-     * @brief Read the saved authentication token without opening the dialog.
-     * @return Saved token, or an empty string if not set.
+     * @brief Read the saved auth token.
+     * @param profile The profile name.
+     * @return Saved token, or empty string.
      */
-    static QString savedAuthToken();
+    static QString savedAuthToken(const QString &profile = QStringLiteral("Default"));
 
     /**
-     * @brief Whether the daemon requires authentication.
-     * @return @c true if auth is required.
+     * @brief Read whether auth is required.
+     * @param profile The profile name.
+     * @return True if auth is required.
      */
-    static bool savedAuthRequired();
+    static bool savedAuthRequired(const QString &profile = QStringLiteral("Default"));
 
 signals:
     /**
@@ -123,6 +128,10 @@ private slots:
     void onAccepted();
     void onApply();
 
+    void onProfileChanged();
+    void onAddProfile();
+    void onRemoveProfile();
+
 private:
     QWidget *buildServersAndCharactersTab();
     QWidget *buildDisplayTab();
@@ -134,12 +143,20 @@ private:
     void loadDaemonConnectionSettings();
     bool saveDaemonConnectionSettings();
 
-    static QSettings makeSettings();
+    void loadProfiles();
+    void saveProfiles();
+    QStringList profiles() const;
+    void setProfiles(const QStringList &profiles);
+
+    static QSettings makeSettings(const QString &profile = QStringLiteral("Default"));
 
     QTabWidget       *m_tabs    = nullptr; ///< The six-tab widget.
     QDialogButtonBox *m_buttons = nullptr; ///< OK / Cancel / Apply buttons.
 
+    QStringList       m_profiles;          ///< List of available profiles.
+
     // Tab 6 widgets
+    QComboBox *m_profileCombo = nullptr; ///< Profile selector.
     QLineEdit *m_hostEdit   = nullptr; ///< Daemon hostname/IP input.
     QSpinBox  *m_portSpin   = nullptr; ///< Daemon port spinbox.
     QCheckBox *m_authCheck  = nullptr; ///< "Require authentication" checkbox.

@@ -97,9 +97,6 @@ INTERACTIVE_SVG        = YES
 DOT_GRAPH_MAX_NODES    = 100
 MAX_DOT_GRAPH_DEPTH    = 4
 
-# Graceful degradation if dot is not installed
-DOT_WARN_IF_DOT_NOT_FOUND = NO
-
 #---------------------------------------------------------------------------
 # Preprocessing
 #---------------------------------------------------------------------------
@@ -147,7 +144,6 @@ USE_MDFILE_AS_MAINPAGE = docs/mainpage.md
 #---------------------------------------------------------------------------
 
 ALPHABETICAL_INDEX     = YES
-COLS_IN_ALPHA_INDEX    = 3
 GENERATE_TREEVIEW      = YES
 TREEVIEW_WIDTH         = 280
 SEARCHENGINE           = YES

@@ -25,9 +25,23 @@ CharacterSession::~CharacterSession()
 // Public API
 // ---------------------------------------------------------------------------
 
+void CharacterSession::setConnectionInfo(const QString &host, quint16 port,
+                                         const QString &username,
+                                         const QString &password,
+                                         bool autoReconnect)
+{
+    m_mudHost = host;
+    m_mudPort = port;
+    m_loginUsername = username;
+    m_loginPassword = password;
+    m_autoReconnect = autoReconnect;
+}
+
+
 void CharacterSession::stop()
 {
     m_stopRequested = true;
+    m_reconnectTimer.stop();
 
     if (m_mudSocket != nullptr)
     {
@@ -68,8 +82,19 @@ void CharacterSession::init()
              << m_characterName << "on thread"
              << QThread::currentThread();
 
-    // TODO: load MUD connection parameters from database and connect
-    // connectToMud();
+    // Reconnect timer used after unexpected disconnects.
+    connect(&m_reconnectTimer, &QTimer::timeout,
+            this, &CharacterSession::connectToMud);
+
+    if (m_mudHost.isEmpty())
+    {
+        qWarning() << "CharacterSession: no MUD connection info for character"
+                   << m_characterId << m_characterName;
+        setStatus(CharacterStatus::Disconnected);
+        return;
+    }
+
+    connectToMud();
 }
 
 void CharacterSession::sendInput(const QString &text)
@@ -107,16 +132,27 @@ void CharacterSession::onMudDisconnected()
         return;
     }
 
-    // Unexpected disconnect — reset parser state and reconnect
     if (m_ansiParser != nullptr)
     {
         m_ansiParser->reset();
     }
+
+    if (!m_autoReconnect)
+    {
+        setStatus(CharacterStatus::Disconnected);
+        qInfo() << "CharacterSession: character" << m_characterId
+                << "disconnected and auto-reconnect disabled";
+        return;
+    }
+
     setStatus(CharacterStatus::Reconnecting);
     qDebug() << "CharacterSession: character" << m_characterId
-             << "disconnected — will reconnect";
+             << "disconnected — scheduling reconnect";
 
-    // TODO: reconnect timer
+    if (!m_reconnectTimer.isActive())
+    {
+        m_reconnectTimer.start(5000);
+    }
 }
 
 void CharacterSession::onMudError(QAbstractSocket::SocketError error)

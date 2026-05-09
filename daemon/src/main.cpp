@@ -1,6 +1,8 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QHostAddress>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QDebug>
 
 #include "DaemonServer.h"
@@ -70,12 +72,60 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // -----------------------------------------------------------------------
-    // Server
-    // -----------------------------------------------------------------------
+    QSqlQuery query(db.mainDb());
+    const QString loadCharactersSql = QStringLiteral(
+        "SELECT \"Character\".id AS char_db_id, \"Character\".name AS char_name, "
+        "MudServer.host AS mud_host, MudServer.port AS mud_port, "
+        "MudServer.id AS server_id, MudInstance.id AS instance_id, "
+        "MudServer.mud_type AS mud_type, MudInstance.instance_selector AS instance_selector, "
+        "UserLogin.username AS login_username, UserLogin.password AS login_password, "
+        "\"Character\".auto_reconnect AS auto_reconnect "
+        "FROM \"Character\" "
+        "JOIN MudInstance ON \"Character\".instance_id = MudInstance.id "
+        "JOIN UserLogin ON MudInstance.login_id = UserLogin.id "
+        "JOIN MudServer ON UserLogin.server_id = MudServer.id "
+        "ORDER BY \"Character\".id ASC "
+        "LIMIT 16"
+    );
+
+    if (!query.exec(loadCharactersSql))
+    {
+        qCritical() << "Failed to query characters:" << query.lastError().text();
+        return 1;
+    }
 
     CharacterRegistry registry;
     DaemonServer server(&registry);
+
+    int protocolId = 1;
+    while (query.next())
+    {
+        const int charDbId = query.value("char_db_id").toInt();
+        const QString name = query.value("char_name").toString();
+        const QString host = query.value("mud_host").toString();
+        const quint16 portValue = static_cast<quint16>(query.value("mud_port").toUInt());
+        const QString loginUsername = query.value("login_username").toString();
+        const QString loginPassword = query.value("login_password").toString();
+        const bool autoReconnect = query.value("auto_reconnect").toBool();
+        const quint8 serverProfileId = static_cast<quint8>(query.value("server_id").toUInt());
+        const quint8 instanceId = static_cast<quint8>(query.value("instance_id").toUInt());
+
+        if (protocolId > 16)
+        {
+            qWarning() << "Main: ignoring character" << name
+                       << "because only 16 characters are supported.";
+            break;
+        }
+
+        registry.addSession(
+            static_cast<quint8>(protocolId), name,
+            charDbId,
+            host, portValue,
+            loginUsername, loginPassword,
+            autoReconnect,
+            serverProfileId, instanceId);
+        protocolId++;
+    }
 
     if (!server.listen(bindAddress, port))
     {

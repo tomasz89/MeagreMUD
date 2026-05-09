@@ -58,7 +58,15 @@ public:
      * @return Pointer to the session (owned by the registry). Never null.
      */
     CharacterSession *addSession(quint8 characterId,
-                                 const QString &characterName);
+                                 const QString &characterName,
+                                 int characterDbId = 0,
+                                 const QString &mudHost = QString(),
+                                 quint16 mudPort = 0,
+                                 const QString &loginUsername = QString(),
+                                 const QString &loginPassword = QString(),
+                                 bool autoReconnect = true,
+                                 quint8 serverProfileId = 0,
+                                 quint8 instanceId = 0);
 
     /**
      * @brief Returns the session for @p characterId, or @c nullptr if not found.

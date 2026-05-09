@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QThread>
 #include <QTcpSocket>
+#include <QTimer>
 #include <QString>
 #include "protocol/Protocol.h"
 #include "types/MudTypes.h"
@@ -66,6 +67,34 @@ public:
 
     /// @brief Returns the current MUD connection status.
     CharacterStatus status() const { return m_status; }
+
+    /// @brief Returns the underlying database record ID for this character.
+    int characterDbId() const { return m_characterDbId; }
+
+    /**
+     * @brief Configures the session's database-backed identity.
+     *
+     * Must be called before the session thread starts.
+     */
+    void setDatabaseId(int dbId) { m_characterDbId = dbId; }
+
+    /**
+     * @brief Configures MUD connection details for this session.
+     *
+     * Must be called before the session thread starts.
+     */
+    void setConnectionInfo(const QString &host, quint16 port,
+                           const QString &username, const QString &password,
+                           bool autoReconnect);
+
+    /// @brief Returns the server profile ID to expose in CharacterInfo.
+    quint8 serverProfileId() const { return m_serverProfileId; }
+
+    /// @brief Returns the instance ID to expose in CharacterInfo.
+    quint8 instanceId() const { return m_instanceId; }
+
+    void setServerProfileId(quint8 id) { m_serverProfileId = id; }
+    void setInstanceId(quint8 id) { m_instanceId = id; }
 
     /**
      * @brief Requests a clean shutdown of the session.
@@ -182,4 +211,11 @@ private:
     quint16         m_mudPort = 0;   ///< MUD server port (loaded from DB).
 
     bool            m_stopRequested = false; ///< Set by stop() to signal clean shutdown.
+    bool            m_autoReconnect = true; ///< Reconnect automatically on unexpected disconnect.
+    int             m_characterDbId = 0;    ///< Database ID for this character.
+    quint8          m_serverProfileId = 0;   ///< Exposed in CharacterInfo.
+    quint8          m_instanceId = 0;        ///< Exposed in CharacterInfo.
+    QString         m_loginUsername;         ///< MUD login username.
+    QString         m_loginPassword;         ///< MUD login password.
+    QTimer          m_reconnectTimer;        ///< Used for automatic reconnects.
 };

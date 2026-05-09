@@ -82,6 +82,10 @@ CREATE TABLE IF NOT EXISTS MudServer (
 )SQL";
 
 static constexpr const char *CREATE_MUD_SERVER_QUIRK = R"SQL(
+-- Default quirk keys:
+--   meagre_handshake_timeout_ms   (default 5000)
+--   rest_timeout_ms               (MegaMUD rest timeout)
+--   native_db_version             (default '1.11p') -- NativeDbImporter field map
 CREATE TABLE IF NOT EXISTS MudServerQuirk (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     server_id   INTEGER NOT NULL REFERENCES MudServer(id) ON DELETE CASCADE,
@@ -89,10 +93,6 @@ CREATE TABLE IF NOT EXISTS MudServerQuirk (
     quirk_value TEXT    NOT NULL,
     UNIQUE (server_id, quirk_key)
 );
--- Default quirk keys:
---   meagre_handshake_timeout_ms   (default 5000)
---   rest_timeout_ms               (MegaMUD rest timeout)
---   native_db_version             (default '1.11p') -- NativeDbImporter field map
 )SQL";
 
 static constexpr const char *CREATE_USER_LOGIN = R"SQL(

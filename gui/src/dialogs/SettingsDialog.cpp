@@ -6,6 +6,8 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
+#include <QInputDialog>
+#include <QMessageBox>
 
 // ---------------------------------------------------------------------------
 // Construction
@@ -22,6 +24,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     auto *layout = new QVBoxLayout(this);
 
     m_tabs = new QTabWidget(this);
+    m_tabs->setTabPosition(QTabWidget::West);
     m_tabs->addTab(buildServersAndCharactersTab(),
                    QStringLiteral("Servers && Characters"));
     m_tabs->addTab(buildDisplayTab(),
@@ -48,6 +51,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(m_buttons->button(QDialogButtonBox::Apply), &QPushButton::clicked,
             this, &SettingsDialog::onApply);
 
+    loadProfiles();
     loadDaemonConnectionSettings();
 }
 
@@ -60,28 +64,28 @@ void SettingsDialog::setCurrentTab(Tab tab)
     m_tabs->setCurrentIndex(static_cast<int>(tab));
 }
 
-QString SettingsDialog::savedHost()
+QString SettingsDialog::savedHost(const QString &profile)
 {
-    QSettings s = makeSettings();
+    QSettings s = makeSettings(profile);
     return s.value(KEY_HOST, QStringLiteral("127.0.0.1")).toString();
 }
 
-quint16 SettingsDialog::savedPort()
+quint16 SettingsDialog::savedPort(const QString &profile)
 {
-    QSettings s = makeSettings();
+    QSettings s = makeSettings(profile);
     return static_cast<quint16>(
         s.value(KEY_PORT, DEFAULT_PORT).toUInt());
 }
 
-QString SettingsDialog::savedAuthToken()
+QString SettingsDialog::savedAuthToken(const QString &profile)
 {
-    QSettings s = makeSettings();
+    QSettings s = makeSettings(profile);
     return s.value(KEY_AUTH_TOKEN, QString()).toString();
 }
 
-bool SettingsDialog::savedAuthRequired()
+bool SettingsDialog::savedAuthRequired(const QString &profile)
 {
-    QSettings s = makeSettings();
+    QSettings s = makeSettings(profile);
     return s.value(KEY_AUTH_REQUIRED, false).toBool();
 }
 
@@ -167,6 +171,28 @@ QWidget *SettingsDialog::buildDaemonConnectionTab()
     auto *w      = new QWidget();
     auto *layout = new QVBoxLayout(w);
 
+    // Profile group
+    auto *profileGroup = new QGroupBox(QStringLiteral("Profile"), w);
+    auto *profileLayout = new QHBoxLayout(profileGroup);
+
+    m_profileCombo = new QComboBox(profileGroup);
+    m_profileCombo->addItems(m_profiles);
+    profileLayout->addWidget(new QLabel(QStringLiteral("Profile:"), profileGroup));
+    profileLayout->addWidget(m_profileCombo, 1);
+
+    auto *addButton = new QPushButton(QStringLiteral("Add"), profileGroup);
+    profileLayout->addWidget(addButton);
+
+    auto *removeButton = new QPushButton(QStringLiteral("Remove"), profileGroup);
+    profileLayout->addWidget(removeButton);
+
+    connect(m_profileCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &SettingsDialog::onProfileChanged);
+    connect(addButton, &QPushButton::clicked, this, &SettingsDialog::onAddProfile);
+    connect(removeButton, &QPushButton::clicked, this, &SettingsDialog::onRemoveProfile);
+
+    layout->addWidget(profileGroup);
+
     // Connection group
     auto *connGroup  = new QGroupBox(QStringLiteral("Daemon Address"), w);
     auto *connForm   = new QFormLayout(connGroup);
@@ -239,13 +265,101 @@ QWidget *SettingsDialog::buildDaemonConnectionTab()
     return w;
 }
 
+void SettingsDialog::onProfileChanged()
+{
+    loadDaemonConnectionSettings();
+}
+
+void SettingsDialog::onAddProfile()
+{
+    // Similar to ConnectionDialog
+    bool ok;
+    QString newProfile = QInputDialog::getText(this, QStringLiteral("New Profile"),
+                                               QStringLiteral("Profile name:"),
+                                               QLineEdit::Normal, QString(), &ok);
+    if (ok && !newProfile.isEmpty()) {
+        if (m_profiles.contains(newProfile)) {
+            QMessageBox::warning(this, QStringLiteral("Duplicate Profile"),
+                                 QStringLiteral("Profile '%1' already exists.").arg(newProfile));
+            return;
+        }
+        m_profiles.append(newProfile);
+        saveProfiles();
+        m_profileCombo->addItem(newProfile);
+        m_profileCombo->setCurrentText(newProfile);
+        // Clear fields for new profile
+        m_hostEdit->setText(QStringLiteral("127.0.0.1"));
+        m_portSpin->setValue(DEFAULT_PORT);
+        m_authCheck->setChecked(false);
+        m_tokenEdit->clear();
+    }
+}
+
+void SettingsDialog::onRemoveProfile()
+{
+    QString profile = m_profileCombo->currentText();
+    if (profile.isEmpty() || profile == QStringLiteral("Default")) {
+        QMessageBox::warning(this, QStringLiteral("Cannot Remove"),
+                             QStringLiteral("Cannot remove the Default profile."));
+        return;
+    }
+    if (QMessageBox::question(this, QStringLiteral("Remove Profile"),
+                              QStringLiteral("Remove profile '%1'?").arg(profile)) != QMessageBox::Yes) {
+        return;
+    }
+    m_profiles.removeAll(profile);
+    saveProfiles();
+    m_profileCombo->removeItem(m_profileCombo->currentIndex());
+    if (!m_profiles.isEmpty()) {
+        m_profileCombo->setCurrentText(m_profiles.first());
+        onProfileChanged();
+    }
+}
+
 // ---------------------------------------------------------------------------
-// QSettings load / save
+// Profile management
 // ---------------------------------------------------------------------------
+
+void SettingsDialog::loadProfiles()
+{
+    QSettings s = makeSettings(QStringLiteral("main"));
+    m_profiles = s.value(QStringLiteral("profiles"), QStringList()).toStringList();
+    if (m_profiles.isEmpty()) {
+        m_profiles << QStringLiteral("Default");
+        saveProfiles();
+    }
+}
+
+void SettingsDialog::saveProfiles()
+{
+    QSettings s = makeSettings(QStringLiteral("main"));
+    s.setValue(QStringLiteral("profiles"), m_profiles);
+    s.sync();
+}
+
+QStringList SettingsDialog::profiles() const
+{
+    return m_profiles;
+}
+
+void SettingsDialog::setProfiles(const QStringList &profiles)
+{
+    m_profiles = profiles;
+    saveProfiles();
+}
 
 void SettingsDialog::loadDaemonConnectionSettings()
 {
-    QSettings s = makeSettings();
+    QString profile = m_profileCombo->currentText();
+    if (profile.isEmpty() && !m_profiles.isEmpty()) {
+        profile = m_profiles.first();
+        m_profileCombo->setCurrentText(profile);
+    }
+    if (profile.isEmpty()) {
+        profile = QStringLiteral("Default");
+    }
+
+    QSettings s = makeSettings(profile);
 
     m_hostEdit->setText(
         s.value(KEY_HOST, QStringLiteral("127.0.0.1")).toString());
@@ -259,7 +373,12 @@ void SettingsDialog::loadDaemonConnectionSettings()
 
 bool SettingsDialog::saveDaemonConnectionSettings()
 {
-    QSettings s = makeSettings();
+    QString profile = m_profileCombo->currentText();
+    if (profile.isEmpty()) {
+        return false;
+    }
+
+    QSettings s = makeSettings(profile);
 
     const QString host      = m_hostEdit->text().trimmed();
     const int     port      = m_portSpin->value();
@@ -289,10 +408,10 @@ bool SettingsDialog::saveDaemonConnectionSettings()
     return changed;
 }
 
-QSettings SettingsDialog::makeSettings()
+QSettings SettingsDialog::makeSettings(const QString &profile)
 {
     return QSettings(QSettings::IniFormat,
                      QSettings::UserScope,
                      QStringLiteral("MeagreMUD"),
-                     QStringLiteral("MeagreMUD"));
+                     QStringLiteral("MeagreMUD-%1").arg(profile));
 }
