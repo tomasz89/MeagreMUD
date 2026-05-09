@@ -66,7 +66,7 @@ private:
     void removeProfileSettings(const QString &profile);
     bool currentSettingsMatchSaved() const;
     void updateButtonStates();
-    static QSettings makeSettings(const QString &profile);
+    static QSettings makeSettings();
 
     QComboBox *m_profileCombo = nullptr;
     QPushButton *m_removeButton = nullptr;
@@ -85,5 +85,5 @@ private:
     static constexpr const char *KEY_PORT          = "port";
     static constexpr const char *KEY_AUTH_REQUIRED = "auth_required";
     static constexpr const char *KEY_AUTH_TOKEN    = "auth_token";
-    static constexpr const char *KEY_PROFILES      = "profiles";
+    static constexpr const char *KEY_PROFILES      = "profiles/list";
 };

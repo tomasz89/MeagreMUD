@@ -56,27 +56,39 @@ void SettingsDialog::setCurrentTab(Tab tab)
 
 QString SettingsDialog::savedHost(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
-    return s.value(KEY_HOST, QStringLiteral("127.0.0.1")).toString();
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
+    QString host = s.value(KEY_HOST, QStringLiteral("127.0.0.1")).toString();
+    s.endGroup();
+    return host;
 }
 
 quint16 SettingsDialog::savedPort(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
-    return static_cast<quint16>(
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
+    quint16 port = static_cast<quint16>(
         s.value(KEY_PORT, DEFAULT_PORT).toUInt());
+    s.endGroup();
+    return port;
 }
 
 QString SettingsDialog::savedAuthToken(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
-    return s.value(KEY_AUTH_TOKEN, QString()).toString();
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
+    QString authToken = s.value(KEY_AUTH_TOKEN, QString()).toString();
+    s.endGroup();
+    return authToken;
 }
 
 bool SettingsDialog::savedAuthRequired(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
-    return s.value(KEY_AUTH_REQUIRED, false).toBool();
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
+    bool savedAuthRequired = s.value(KEY_AUTH_REQUIRED, false).toBool();
+    s.endGroup();
+    return savedAuthRequired;
 }
 
 // ---------------------------------------------------------------------------
@@ -152,10 +164,9 @@ QWidget *SettingsDialog::buildServerQuirksTab()
 // Settings helpers
 // ---------------------------------------------------------------------------
 
-QSettings SettingsDialog::makeSettings(const QString &profile)
+QSettings SettingsDialog::makeSettings()
 {
-    return QSettings(QSettings::IniFormat,
-                     QSettings::UserScope,
+    return QSettings(QSettings::IniFormat, QSettings::UserScope,
                      QStringLiteral("MeagreMUD"),
-                     QStringLiteral("MeagreMUD-%1").arg(profile));
+                     QStringLiteral("MeagreMUD"));
 }

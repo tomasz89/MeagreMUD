@@ -75,28 +75,28 @@ public:
      * @param profile The profile name.
      * @return Saved host, or @c "127.0.0.1" if not yet configured.
      */
-    static QString savedHost(const QString &profile = QStringLiteral("Default"));
+    static QString savedHost(const QString &profile);
 
     /**
      * @brief Read the saved daemon port without opening the dialog.
      * @param profile The profile name.
      * @return Saved port, or 7777 if not yet configured.
      */
-    static quint16 savedPort(const QString &profile = QStringLiteral("Default"));
+    static quint16 savedPort(const QString &profile);
 
     /**
      * @brief Read the saved auth token.
      * @param profile The profile name.
      * @return Saved token, or empty string.
      */
-    static QString savedAuthToken(const QString &profile = QStringLiteral("Default"));
+    static QString savedAuthToken(const QString &profile);
 
     /**
      * @brief Read whether auth is required.
      * @param profile The profile name.
      * @return True if auth is required.
      */
-    static bool savedAuthRequired(const QString &profile = QStringLiteral("Default"));
+    static bool savedAuthRequired(const QString &profile);
 
 private slots:
     void onAccepted();
@@ -109,7 +109,7 @@ private:
     QWidget *buildTriggersTab();
     QWidget *buildServerQuirksTab();
 
-    static QSettings makeSettings(const QString &profile = QStringLiteral("Default"));
+    static QSettings makeSettings();
 
     QTabWidget       *m_tabs    = nullptr; ///< The tab widget.
     QDialogButtonBox *m_buttons = nullptr; ///< OK / Cancel / Apply buttons.

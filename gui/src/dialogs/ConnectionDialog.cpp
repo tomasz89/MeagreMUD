@@ -235,7 +235,7 @@ void ConnectionDialog::onDisconnect()
 
 void ConnectionDialog::loadProfiles()
 {
-    QSettings s = makeSettings(QStringLiteral("main"));
+    QSettings s = makeSettings();
     m_profiles = s.value(KEY_PROFILES, QStringList()).toStringList();
     m_profileCombo->clear();
     m_profileCombo->addItems(m_profiles);
@@ -243,35 +243,41 @@ void ConnectionDialog::loadProfiles()
 
 void ConnectionDialog::saveProfiles()
 {
-    QSettings s = makeSettings(QStringLiteral("main"));
+    QSettings s = makeSettings();
     s.setValue(KEY_PROFILES, m_profiles);
     s.sync();
 }
 
 void ConnectionDialog::loadProfileSettings(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
     m_hostEdit->setText(s.value(KEY_HOST, QStringLiteral("127.0.0.1")).toString());
     m_portSpin->setValue(s.value(KEY_PORT, DEFAULT_PORT).toInt());
     m_authCheck->setChecked(s.value(KEY_AUTH_REQUIRED, false).toBool());
     m_tokenEdit->setText(s.value(KEY_AUTH_TOKEN, QString()).toString());
+    s.endGroup();
     updateButtonStates();
 }
 
 void ConnectionDialog::saveProfileSettings(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
     s.setValue(KEY_HOST, m_hostEdit->text().trimmed());
     s.setValue(KEY_PORT, m_portSpin->value());
     s.setValue(KEY_AUTH_REQUIRED, m_authCheck->isChecked());
     s.setValue(KEY_AUTH_TOKEN, m_tokenEdit->text());
+    s.endGroup();
     s.sync();
 }
 
 void ConnectionDialog::removeProfileSettings(const QString &profile)
 {
-    QSettings s = makeSettings(profile);
-    s.clear();
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
+    s.remove(QString());   // removes all keys in this group
+    s.endGroup();
     s.sync();
 }
 
@@ -282,11 +288,13 @@ bool ConnectionDialog::currentSettingsMatchSaved() const
         return true;
     }
 
-    QSettings s = makeSettings(profile);
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("profile-%1").arg(profile));
     QString savedHost = s.value(KEY_HOST, QStringLiteral("127.0.0.1")).toString();
     int savedPort = s.value(KEY_PORT, DEFAULT_PORT).toInt();
     bool savedAuth = s.value(KEY_AUTH_REQUIRED, false).toBool();
     QString savedToken = s.value(KEY_AUTH_TOKEN, QString()).toString();
+    s.endGroup();
 
     return savedHost == m_hostEdit->text().trimmed()
         && savedPort == m_portSpin->value()
@@ -305,9 +313,9 @@ void ConnectionDialog::updateButtonStates()
     }
 }
 
-QSettings ConnectionDialog::makeSettings(const QString &profile)
+QSettings ConnectionDialog::makeSettings()
 {
     return QSettings(QSettings::IniFormat, QSettings::UserScope,
                      QStringLiteral("MeagreMUD"),
-                     QStringLiteral("MeagreMUD-%1").arg(profile));
+                     QStringLiteral("MeagreMUD"));
 }
