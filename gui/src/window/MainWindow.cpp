@@ -50,7 +50,7 @@ void MainWindow::setupMenuBar()
     // File menu
     QMenu *fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
 
-    m_connectAction = fileMenu->addAction(QStringLiteral("&Connect to Daemon…"));
+    m_connectAction = fileMenu->addAction(QStringLiteral("&Connection…"));
     connect(m_connectAction, &QAction::triggered,
             this, &MainWindow::onActionConnect);
 
@@ -166,23 +166,7 @@ void MainWindow::onActionPathEditor()
 void MainWindow::onActionSettings()
 {
     SettingsDialog dlg(this);
-    connect(&dlg, &SettingsDialog::daemonConnectionChanged,
-            this, &MainWindow::onDaemonConnectionSettingsChanged);
     dlg.exec();
-}
-void MainWindow::onDaemonConnectionSettingsChanged()
-{
-    // Settings were saved. If we are currently disconnected the new host/port
-    // will be picked up automatically on the next connect attempt.
-    // If already connected, inform the user the change takes effect on
-    // next connection.
-    if (m_connectionManager.state() != DaemonConnectionManager::State::Disconnected)
-    {
-        statusBar()->showMessage(
-            QStringLiteral("[MeagreMUD] Daemon connection settings updated"
-                           " — takes effect on next connection."),
-            5000);
-    }
 }
 
 void MainWindow::onActionAbout()
@@ -497,7 +481,7 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port()));
             m_connectAction->setEnabled(false);
-            m_disconnectAction->setEnabled(true);
+            m_disconnectAction->setEnabled(false);
             break;
 
         case DaemonConnectionManager::State::Syncing:
@@ -506,7 +490,7 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port()));
             m_connectAction->setEnabled(false);
-            m_disconnectAction->setEnabled(true);
+            m_disconnectAction->setEnabled(false);
             break;
 
         case DaemonConnectionManager::State::Connected:

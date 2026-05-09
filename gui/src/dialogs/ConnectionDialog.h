@@ -12,6 +12,7 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QPushButton>
 #include <QSettings>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -52,6 +53,8 @@ signals:
 private slots:
     void onProfileChanged();
     void onAddProfile();
+    void onRemoveProfile();
+    void onSaveProfile();
     void onConnect();
     void onDisconnect();
 
@@ -60,9 +63,14 @@ private:
     void saveProfiles();
     void loadProfileSettings(const QString &profile);
     void saveProfileSettings(const QString &profile);
+    void removeProfileSettings(const QString &profile);
+    bool currentSettingsMatchSaved() const;
+    void updateButtonStates();
     static QSettings makeSettings(const QString &profile);
 
     QComboBox *m_profileCombo = nullptr;
+    QPushButton *m_removeButton = nullptr;
+    QPushButton *m_saveButton = nullptr;
     QLineEdit  *m_hostEdit     = nullptr;
     QSpinBox  *m_portSpin     = nullptr;
     QCheckBox *m_authCheck    = nullptr;

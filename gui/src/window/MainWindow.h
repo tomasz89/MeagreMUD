@@ -69,10 +69,6 @@ private slots:
     /// Open the SettingsDialog.
     void onActionSettings();
 
-    /// Called when daemon connection settings change in SettingsDialog.
-    /// Notifies the user if a reconnect is needed.
-    void onDaemonConnectionSettingsChanged();
-
     /// Called when ConnectionDialog requests connect with a profile.
     void onConnectRequested(const QString &profile);
 
@@ -179,7 +175,7 @@ private:
     QLabel         *m_statusLabel    = nullptr; ///< Global status bar label.
 
     QAction *m_connectAction    = nullptr; ///< Enabled only when Disconnected.
-    QAction *m_disconnectAction = nullptr; ///< Enabled in all non-Disconnected states.
+    QAction *m_disconnectAction = nullptr; ///< Enabled only when Connected.
 
     DaemonConnectionManager m_connectionManager; ///< Owns the daemon TCP socket.
     int m_resyncCountDisplayed = 0; ///< Last resync count shown to the user.
