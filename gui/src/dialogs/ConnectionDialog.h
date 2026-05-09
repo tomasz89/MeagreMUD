@@ -52,6 +52,10 @@ signals:
      */
     void disconnectRequested();
 
+public:
+    static void    saveLastProfile(const QString &profile);
+    static QString lastUsedProfile();
+
 private slots:
     void onProfileChanged();
     void onAddProfile();

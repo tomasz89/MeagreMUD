@@ -64,6 +64,16 @@ private slots:
     /// Send Goodbye and disconnect from the daemon.
     void onActionDisconnect();
 
+    /// Quick-connect using the last used profile. No-op if no profile saved.
+    void onActionQuickConnect();
+
+    /// Save the auto-connect setting when the menu item is toggled.
+    void onAutoConnectToggled(bool enabled);
+
+    /// Quick-connect using the last used profile. No-op if no profile saved.
+
+    /// Save the auto-connect setting when the menu item is toggled.
+
     /// Open the PathEditor window (stub until PathEditor is implemented).
     void onActionPathEditor();
 
@@ -135,6 +145,18 @@ private:
     void lockAllPanes(bool locked);
     void applyObserverMode(bool observer);
 
+    /// @name Auto-connect helpers
+    /// @{
+    bool loadAutoConnect() const;
+    void saveAutoConnect(bool enabled);
+    void scheduleRetry(const QString &profile);
+    void cancelRetry();
+    /// @}
+
+    /// @name Auto-connect QSettings helpers
+    /// @{
+    /// @}
+
     /// @name Frame handlers
     /// Called from onFrameReceived() for each recognised message type.
     /// @{
@@ -175,12 +197,21 @@ private:
     AttentionPanel *m_attentionPanel = nullptr; ///< Collapsible event drawer.
     QLabel         *m_statusLabel    = nullptr; ///< Global status bar label.
 
-    QAction *m_connectAction     = nullptr; ///< Enabled only when Disconnected.
-    QAction *m_disconnectAction  = nullptr; ///< Enabled only when Connected.
-    QAction *m_pathEditorAction  = nullptr; ///< Enabled only when Connected.
-    QAction *m_settingsAction    = nullptr; ///< Enabled only when Connected.
+    QAction *m_connectAction      = nullptr; ///< Opens ConnectionDialog.
+    QAction *m_quickConnectAction = nullptr; ///< Connect with last profile; disabled if none or not Disconnected.
+    QAction *m_autoConnectAction  = nullptr; ///< Checkable; auto-connect on launch; persisted in QSettings.
+    QAction *m_disconnectAction   = nullptr; ///< Enabled whenever not Disconnected.
+    QAction *m_pathEditorAction   = nullptr; ///< Enabled only when Connected.
+    QAction *m_settingsAction     = nullptr; ///< Enabled only when Connected.
 
     DaemonConnectionManager m_connectionManager; ///< Owns the daemon TCP socket.
+
+    // Auto-connect retry
+    QTimer  m_retryTimer;               ///< Fires after backoff to attempt reconnect.
+    QString m_retryProfile;             ///< Profile to retry; empty = no retry pending.
+    bool    m_userDisconnected = false; ///< Set when user explicitly disconnects; suppresses retry.
+
+    static constexpr int RETRY_INTERVAL_MS = 5000; ///< Backoff between auto-connect retries.
     int m_resyncCountDisplayed = 0; ///< Last resync count shown to the user.
 
     QMap<quint8, CharacterPane *> m_panes; ///< Character panes keyed by character_id.

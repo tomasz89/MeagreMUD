@@ -251,6 +251,7 @@ void ConnectionDialog::onOkClicked()
     // If disconnected, also initiate connection
     if (m_currentState == DaemonConnectionManager::State::Disconnected)
     {
+        saveLastProfile(profile);
         emit connectRequested(profile);
     }
 
@@ -365,6 +366,24 @@ void ConnectionDialog::updateButtonStates()
             m_okButton->setText(QStringLiteral("Save"));
         }
     }
+}
+
+void ConnectionDialog::saveLastProfile(const QString &profile)
+{
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("gui"));
+    s.setValue(QStringLiteral("last_profile"), profile);
+    s.endGroup();
+    s.sync();
+}
+
+QString ConnectionDialog::lastUsedProfile()
+{
+    QSettings s = makeSettings();
+    s.beginGroup(QStringLiteral("gui"));
+    const QString profile = s.value(QStringLiteral("last_profile")).toString();
+    s.endGroup();
+    return profile;
 }
 
 QSettings ConnectionDialog::makeSettings()

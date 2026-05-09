@@ -1,11 +1,13 @@
 #include "window/MainWindow.h"
 
 #include <QApplication>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QMessageBox>
+#include <QSettings>
 #include <QDebug>
 
 #include "dialogs/ConnectionDialog.h"
@@ -37,6 +39,34 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Start in disconnected state
     updateConnectionUi(DaemonConnectionManager::State::Disconnected);
+
+    // Wire retry timer — single-shot, reconnects on timeout
+    m_retryTimer.setSingleShot(true);
+    connect(&m_retryTimer, &QTimer::timeout, this, [this]()
+    {
+        if (!m_retryProfile.isEmpty()
+            && m_connectionManager.state() == DaemonConnectionManager::State::Disconnected)
+        {
+            statusBar()->showMessage(
+                QStringLiteral("[MeagreMUD] Retrying connection to %1â¦")
+                    .arg(m_retryProfile));
+            onConnectRequested(m_retryProfile);
+        }
+    });
+
+    // Auto-connect if enabled and a last profile exists
+    if (loadAutoConnect())
+    {
+        const QString profile = ConnectionDialog::lastUsedProfile();
+        if (!profile.isEmpty())
+        {
+            // Use a single-shot timer so the window is fully shown first
+            QTimer::singleShot(0, this, [this, profile]()
+            {
+                onConnectRequested(profile);
+            });
+        }
+    }
 }
 
 MainWindow::~MainWindow()
@@ -61,9 +91,22 @@ void MainWindow::setupMenuBar()
     connect(m_connectAction, &QAction::triggered,
             this, &MainWindow::onActionConnect);
 
+    m_quickConnectAction = fileMenu->addAction(QStringLiteral("Quick &Connect"));
+    m_quickConnectAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_K));
+    connect(m_quickConnectAction, &QAction::triggered,
+            this, &MainWindow::onActionQuickConnect);
+
     m_disconnectAction = fileMenu->addAction(QStringLiteral("&Disconnect"));
     connect(m_disconnectAction, &QAction::triggered,
             this, &MainWindow::onActionDisconnect);
+
+    fileMenu->addSeparator();
+
+    m_autoConnectAction = fileMenu->addAction(QStringLiteral("Auto-connect on launch"));
+    m_autoConnectAction->setCheckable(true);
+    m_autoConnectAction->setChecked(loadAutoConnect());
+    connect(m_autoConnectAction, &QAction::toggled,
+            this, &MainWindow::onAutoConnectToggled);
 
     fileMenu->addSeparator();
 
@@ -147,6 +190,7 @@ void MainWindow::onActionConnect()
 
 void MainWindow::onConnectRequested(const QString &profile)
 {
+    m_userDisconnected = false;
     m_connectionManager.connectToDaemon(
         SettingsDialog::savedHost(profile),
         SettingsDialog::savedPort(profile));
@@ -158,7 +202,63 @@ void MainWindow::onDisconnectRequested()
 }
 void MainWindow::onActionDisconnect()
 {
+    m_userDisconnected = true;
+    cancelRetry();
     m_connectionManager.disconnectFromDaemon();
+}
+
+void MainWindow::onActionQuickConnect()
+{
+    const QString profile = ConnectionDialog::lastUsedProfile();
+    if (profile.isEmpty())
+    {
+        return;
+    }
+    onConnectRequested(profile);
+}
+
+void MainWindow::onAutoConnectToggled(bool enabled)
+{
+    saveAutoConnect(enabled);
+    if (!enabled)
+    {
+        cancelRetry();
+    }
+}
+
+void MainWindow::scheduleRetry(const QString &profile)
+{
+    m_retryProfile = profile;
+    m_retryTimer.start(RETRY_INTERVAL_MS);
+    statusBar()->showMessage(
+        QStringLiteral("[MeagreMUD] Connection failed â retrying in %1sâ¦")
+            .arg(RETRY_INTERVAL_MS / 1000));
+}
+
+void MainWindow::cancelRetry()
+{
+    m_retryProfile.clear();
+    m_retryTimer.stop();
+}
+
+bool MainWindow::loadAutoConnect() const
+{
+    QSettings s(QSettings::IniFormat, QSettings::UserScope,
+                QStringLiteral("MeagreMUD"), QStringLiteral("MeagreMUD"));
+    s.beginGroup(QStringLiteral("gui"));
+    const bool result = s.value(QStringLiteral("auto_connect"), false).toBool();
+    s.endGroup();
+    return result;
+}
+
+void MainWindow::saveAutoConnect(bool enabled)
+{
+    QSettings s(QSettings::IniFormat, QSettings::UserScope,
+                QStringLiteral("MeagreMUD"), QStringLiteral("MeagreMUD"));
+    s.beginGroup(QStringLiteral("gui"));
+    s.setValue(QStringLiteral("auto_connect"), enabled);
+    s.endGroup();
+    s.sync();
 }
 
 void MainWindow::onActionPathEditor()
@@ -197,6 +297,20 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
         case DaemonConnectionManager::State::Disconnected:
             // Dim all panes but preserve their content
             lockAllPanes(true);
+
+            // Schedule retry if auto-connect is on and disconnect wasn't user-initiated
+            if (loadAutoConnect() && !m_userDisconnected)
+            {
+                const QString profile = ConnectionDialog::lastUsedProfile();
+                if (!profile.isEmpty())
+                {
+                    scheduleRetry(profile);
+                }
+            }
+            else
+            {
+                cancelRetry();
+            }
             break;
 
         case DaemonConnectionManager::State::Connecting:
@@ -484,6 +598,21 @@ void MainWindow::onInputSubmitted(quint8 characterId, const QString &text)
 
 void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
 {
+    // Update quick-connect action label and state
+    const QString lastProfile = ConnectionDialog::lastUsedProfile();
+    if (lastProfile.isEmpty())
+    {
+        m_quickConnectAction->setText(QStringLiteral("Quick Connect"));
+        m_quickConnectAction->setEnabled(false);
+    }
+    else
+    {
+        m_quickConnectAction->setText(
+            QStringLiteral("Quick Connect: %1").arg(lastProfile));
+        m_quickConnectAction->setEnabled(
+            state == DaemonConnectionManager::State::Disconnected);
+    }
+
     switch (state)
     {
         case DaemonConnectionManager::State::Disconnected:
