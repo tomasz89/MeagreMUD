@@ -160,9 +160,9 @@ void GuiConnection::onPingTimer()
 {
     if (m_awaitingPong)
     {
-        // No pong received in time — disconnect
+        // No pong received in time  -  disconnect
         qWarning() << "GuiConnection" << m_connectionId
-                   << "ping timeout — disconnecting";
+                   << "ping timeout  -  disconnecting";
         disconnect(GoodbyeReason::ProtocolError);
         return;
     }
@@ -242,11 +242,11 @@ void GuiConnection::handleFrame(quint8 msgType, quint8 characterId,
             return;
 
         case MSG_GOODBYE:
-            // GUI is disconnecting cleanly — nothing to do, socket close follows
+            // GUI is disconnecting cleanly  -  nothing to do, socket close follows
             return;
 
         case MSG_PING:
-            // GUI pinging us — send pong
+            // GUI pinging us  -  send pong
             sendFrame(MSG_PONG, CHARACTER_ID_DAEMON, QByteArray());
             return;
 
@@ -365,13 +365,13 @@ void GuiConnection::handleInput(quint8 characterId, const QByteArray &payload)
     // Reject input from observers and before resync is complete
     if (!m_isController)
     {
-        // Silently discard — observer sending input is a GUI bug
+        // Silently discard  -  observer sending input is a GUI bug
         return;
     }
 
     if (!m_resyncComplete)
     {
-        // Silently discard — input before resync is a GUI bug
+        // Silently discard  -  input before resync is a GUI bug
         return;
     }
 
@@ -562,7 +562,7 @@ void GuiConnection::sendServerHello()
 {
     QByteArray payload;
     payload.append(static_cast<char>(PROTOCOL_VERSION));
-    payload.append(static_cast<char>(0x00)); // server_flags — no auth required yet
+    payload.append(static_cast<char>(0x00)); // server_flags  -  no auth required yet
     payload.append(static_cast<char>(m_characterCount & 0xFF));
     sendFrame(MSG_SERVER_HELLO, CHARACTER_ID_DAEMON, payload);
 }
@@ -584,7 +584,7 @@ QByteArray GuiConnection::buildFrameHeader(quint8 msgType, quint8 characterId,
     header[0] = static_cast<char>(PROTOCOL_VERSION);
     header[1] = static_cast<char>(msgType);
     header[2] = static_cast<char>(characterId);
-    header[3] = static_cast<char>(0x00); // flags — reserved
+    header[3] = static_cast<char>(0x00); // flags  -  reserved
     header[4] = static_cast<char>(m_txSequence & 0xFF);
     header[5] = static_cast<char>((m_txSequence >> 8) & 0xFF);
     header[6] = static_cast<char>(payloadLen & 0xFF);

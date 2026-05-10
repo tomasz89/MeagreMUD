@@ -16,7 +16,7 @@ InputWidget::InputWidget(QWidget *parent)
 
     m_edit = new QLineEdit(this);
     m_edit->setFrame(false);
-    m_edit->setPlaceholderText(QStringLiteral("Enter command…"));
+    m_edit->setPlaceholderText(QStringLiteral("Enter command..."));
     m_edit->installEventFilter(this);
     layout->addWidget(m_edit);
 
@@ -40,7 +40,7 @@ void InputWidget::setLocked(bool locked)
     }
     else
     {
-        m_edit->setPlaceholderText(QStringLiteral("Enter command…"));
+        m_edit->setPlaceholderText(QStringLiteral("Enter command..."));
     }
 }
 
@@ -84,7 +84,7 @@ void InputWidget::onReturnPressed()
 }
 
 // ---------------------------------------------------------------------------
-// Event filter — intercepts key events on the QLineEdit
+// Event filter  -  intercepts key events on the QLineEdit
 // ---------------------------------------------------------------------------
 
 bool InputWidget::eventFilter(QObject *watched, QEvent *event)
@@ -101,7 +101,7 @@ bool InputWidget::eventFilter(QObject *watched, QEvent *event)
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-    // Check macros first — they fire even when not locked
+    // Check macros first  -  they fire even when not locked
     for (const Macro &macro : m_macros)
     {
         if (keyEvent->key() == macro.key
@@ -172,7 +172,7 @@ void InputWidget::historyDown()
     }
     else
     {
-        // Reached the bottom — restore the draft
+        // Reached the bottom  -  restore the draft
         m_historyIndex = -1;
         m_edit->setText(m_draft);
         m_draft.clear();
@@ -192,7 +192,7 @@ void InputWidget::submitText(const QString &text)
         return;
     }
 
-    // Add to history — deduplicate consecutive identical entries
+    // Add to history  -  deduplicate consecutive identical entries
     if (m_history.isEmpty() || m_history.last() != text)
     {
         m_history.append(text);

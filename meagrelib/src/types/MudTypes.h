@@ -19,10 +19,10 @@ static constexpr quint8 COLOUR_DEFAULT = 0xFF;
  * completes, bundling all text accumulated since the previous style change.
  *
  * @note @c fg and @c bg are indices into the 16-colour ANSI palette
- *       (0–7 normal, 8–15 bright). COLOUR_DEFAULT (0xFF) means "use the
+ *       (0 - 7 normal, 8 - 15 bright). COLOUR_DEFAULT (0xFF) means "use the
  *       terminal default colour".
  *
- * Wire format (daemon → GUI):
+ * Wire format (daemon -> GUI):
  * @code
  * [fg: 1][bg: 1][bold: 1][text_len: 2][text: N (UTF-8)]
  * @endcode

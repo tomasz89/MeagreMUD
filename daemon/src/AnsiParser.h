@@ -18,7 +18,7 @@
  * and emits runReady() whenever an ANSI SGR escape sequence completes,
  * bundling all text accumulated since the previous style change.
  *
- * @par Core rule — no newline flush
+ * @par Core rule  -  no newline flush
  * runReady() is emitted on escape-sequence completion, @b never on @c \\n.
  * MUD prompts sit on open lines indefinitely with no @c \\n arriving; any
  * design that waits for @c \\n will stall the display. @c \\n appears inside
@@ -26,41 +26,41 @@
  *
  * @par State machine
  * @code
- * Normal      → 0x1B → EscapeStart
- *             → \\r  → set pendingCR
- *             → other → append to run text
- * EscapeStart → '['  → CSI
- *             → other → drop ESC, re-process char
- * CSI         → digit/';' → CSIParams
- *             → 'H'  → drop (cursor home)
- *             → 'm'  → implicit SGR reset, back to Normal
- *             → '2'  → CSIErase
- *             → other → drop
- * CSIParams   → digit/';' → accumulate
- *             → 'm'  → parse SGR, emit run, apply style, back to Normal
- *             → other → drop sequence
- * CSIErase    → 'J'  → emit screenCleared(), back to Normal
- *             → other → drop
+ * Normal      -> 0x1B -> EscapeStart
+ *             -> \\r  -> set pendingCR
+ *             -> other -> append to run text
+ * EscapeStart -> '['  -> CSI
+ *             -> other -> drop ESC, re-process char
+ * CSI         -> digit/';' -> CSIParams
+ *             -> 'H'  -> drop (cursor home)
+ *             -> 'm'  -> implicit SGR reset, back to Normal
+ *             -> '2'  -> CSIErase
+ *             -> other -> drop
+ * CSIParams   -> digit/';' -> accumulate
+ *             -> 'm'  -> parse SGR, emit run, apply style, back to Normal
+ *             -> other -> drop sequence
+ * CSIErase    -> 'J'  -> emit screenCleared(), back to Normal
+ *             -> other -> drop
  * @endcode
  *
  * @par pendingCR behaviour
  * When @c \\r is seen: set @c pendingCR. Next character:
- * - @c \\n → append @c \\r\\n to run text, clear pendingCR.
- * - other → append @c \\r to run text, clear pendingCR, process the character.
+ * - @c \\n -> append @c \\r\\n to run text, clear pendingCR.
+ * - other -> append @c \\r to run text, clear pendingCR, process the character.
  *
  * @par SGR codes handled
- * - @c 0        — reset all attributes
- * - @c 1        — bold on
- * - @c 30–37   — foreground normal colours (palette indices 0–7)
- * - @c 39       — foreground default
- * - @c 40–47   — background normal colours (palette indices 0–7)
- * - @c 49       — background default
- * - @c 90–97   — foreground bright colours (palette indices 8–15)
- * - @c 100–107 — background bright colours (palette indices 8–15)
+ * - @c 0         -  reset all attributes
+ * - @c 1         -  bold on
+ * - @c 30 - 37    -  foreground normal colours (palette indices 0 - 7)
+ * - @c 39        -  foreground default
+ * - @c 40 - 47    -  background normal colours (palette indices 0 - 7)
+ * - @c 49        -  background default
+ * - @c 90 - 97    -  foreground bright colours (palette indices 8 - 15)
+ * - @c 100 - 107  -  background bright colours (palette indices 8 - 15)
  *
  * All other escape sequences are dropped silently.
  *
- * @note SGR is server→client only. Client input is never parsed here.
+ * @note SGR is server->client only. Client input is never parsed here.
  */
 class AnsiParser : public QObject
 {

@@ -58,7 +58,7 @@ CharacterSession *CharacterRegistry::addSession(quint8 characterId,
             .arg(characterId)
             .arg(characterName));
 
-    // Move session to its thread — must happen before the thread starts
+    // Move session to its thread  -  must happen before the thread starts
     session->moveToThread(thread);
 
     // init() called via queued connection once the thread event loop starts
@@ -122,7 +122,7 @@ void CharacterRegistry::stopAll()
 
     for (auto &entry : m_sessions)
     {
-        // stop() is thread-safe — it sets a flag and disconnects the socket.
+        // stop() is thread-safe  -  it sets a flag and disconnects the socket.
         // The session emits stopped() from its own thread when done,
         // which arrives here via queued connection.
         entry.session->stop();
@@ -142,7 +142,7 @@ void CharacterRegistry::onSessionStopped(quint8 characterId)
         SessionEntry &entry = m_sessions[characterId];
         entry.thread->quit();
         // thread->finished will deleteLater the session
-        // We do not wait here — the thread cleans up asynchronously
+        // We do not wait here  -  the thread cleans up asynchronously
     }
 
     m_pendingStops--;

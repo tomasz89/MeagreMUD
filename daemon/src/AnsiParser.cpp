@@ -51,7 +51,7 @@ void AnsiParser::processChar(char ch)
         {
             if (ch == '\x1B')
             {
-                // Start of escape sequence — flush what we have first
+                // Start of escape sequence  -  flush what we have first
                 flushRun();
                 m_state = State::EscapeStart;
                 return;
@@ -61,7 +61,7 @@ void AnsiParser::processChar(char ch)
             {
                 if (m_pendingCR)
                 {
-                    // Two consecutive \r — treat first as literal \r
+                    // Two consecutive \r  -  treat first as literal \r
                     m_runText += QLatin1Char('\r');
                 }
                 m_pendingCR = true;
@@ -72,7 +72,7 @@ void AnsiParser::processChar(char ch)
             {
                 if (m_pendingCR)
                 {
-                    // \r\n sequence — append as \r\n
+                    // \r\n sequence  -  append as \r\n
                     m_runText += QStringLiteral("\r\n");
                     m_pendingCR = false;
                 }
@@ -133,7 +133,7 @@ void AnsiParser::processChar(char ch)
 
             if (ch == 'm')
             {
-                // ESC[m — implicit SGR reset (same as ESC[0m)
+                // ESC[m  -  implicit SGR reset (same as ESC[0m)
                 applySGR({0});
                 m_state = State::Normal;
                 return;
@@ -141,20 +141,20 @@ void AnsiParser::processChar(char ch)
 
             if (ch == 'H')
             {
-                // ESC[H — cursor home, drop silently
+                // ESC[H  -  cursor home, drop silently
                 m_state = State::Normal;
                 return;
             }
 
             if (ch == '2')
             {
-                // Could be ESC[2J — wait for J
+                // Could be ESC[2J  -  wait for J
                 m_paramBuf += QLatin1Char(ch);
                 m_state = State::CSIErase;
                 return;
             }
 
-            // Unknown CSI introducer — drop and return to Normal
+            // Unknown CSI introducer  -  drop and return to Normal
             m_state = State::Normal;
             return;
         }
@@ -177,14 +177,14 @@ void AnsiParser::processChar(char ch)
 
             if (ch == 'm')
             {
-                // SGR sequence complete — parse and apply
+                // SGR sequence complete  -  parse and apply
                 applySGR(parseParams());
                 m_paramBuf.clear();
                 m_state = State::Normal;
                 return;
             }
 
-            // Unrecognised final byte — drop entire sequence
+            // Unrecognised final byte  -  drop entire sequence
             m_paramBuf.clear();
             m_state = State::Normal;
             return;
@@ -196,7 +196,7 @@ void AnsiParser::processChar(char ch)
         {
             if (ch == 'J')
             {
-                // ESC[2J — screen clear
+                // ESC[2J  -  screen clear
                 flushRun();
                 emit screenCleared();
                 m_paramBuf.clear();
@@ -204,7 +204,7 @@ void AnsiParser::processChar(char ch)
                 return;
             }
 
-            // Not a screen-clear sequence — drop and return to Normal
+            // Not a screen-clear sequence  -  drop and return to Normal
             m_paramBuf.clear();
             m_state = State::Normal;
             return;
@@ -258,7 +258,7 @@ void AnsiParser::applySGR(const QVector<int> &params)
         }
         else if (param >= 30 && param <= 37)
         {
-            // Normal fg colours: palette 0–7
+            // Normal fg colours: palette 0 - 7
             m_fg = static_cast<quint8>(param - 30);
         }
         else if (param == 39)
@@ -267,7 +267,7 @@ void AnsiParser::applySGR(const QVector<int> &params)
         }
         else if (param >= 40 && param <= 47)
         {
-            // Normal bg colours: palette 0–7
+            // Normal bg colours: palette 0 - 7
             m_bg = static_cast<quint8>(param - 40);
         }
         else if (param == 49)
@@ -276,12 +276,12 @@ void AnsiParser::applySGR(const QVector<int> &params)
         }
         else if (param >= 90 && param <= 97)
         {
-            // Bright fg colours: palette 8–15
+            // Bright fg colours: palette 8 - 15
             m_fg = static_cast<quint8>(param - 90 + 8);
         }
         else if (param >= 100 && param <= 107)
         {
-            // Bright bg colours: palette 8–15
+            // Bright bg colours: palette 8 - 15
             m_bg = static_cast<quint8>(param - 100 + 8);
         }
         // All other codes silently ignored

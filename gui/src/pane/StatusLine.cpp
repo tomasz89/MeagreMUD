@@ -24,7 +24,7 @@ StatusLine::StatusLine(const QString &characterName,
         layout->addWidget(line);
     };
 
-    // Character name — fixed, bold
+    // Character name  -  fixed, bold
     m_charNameLabel = new QLabel(characterName, this);
     QFont boldFont = m_charNameLabel->font();
     boldFont.setBold(true);
@@ -51,7 +51,7 @@ StatusLine::StatusLine(const QString &characterName,
 
     addDivider();
 
-    // Combat flag — sword icon when Attack, blank when Passive
+    // Combat flag  -  sword icon when Attack, blank when Passive
     m_combatLabel = new QLabel(this);
     m_combatLabel->setFixedWidth(20);
     m_combatLabel->setAlignment(Qt::AlignCenter);
@@ -59,7 +59,7 @@ StatusLine::StatusLine(const QString &characterName,
 
     addDivider();
 
-    // Room name — stretches to fill remaining space
+    // Room name  -  stretches to fill remaining space
     m_roomLabel = new QLabel(QStringLiteral("(unknown room)"), this);
     m_roomLabel->setTextFormat(Qt::PlainText);
     layout->addWidget(m_roomLabel, 1);
@@ -105,7 +105,7 @@ void StatusLine::setCombatFlag(CombatFlag flag)
     m_combatFlag = flag;
     if (flag == CombatFlag::Attack)
     {
-        m_combatLabel->setText(QStringLiteral("\u2694")); // ⚔ crossed swords
+        m_combatLabel->setText(QStringLiteral("\u2694")); // [sword] crossed swords
     }
     else
     {
@@ -130,7 +130,7 @@ void StatusLine::setScriptRunning(bool running)
     m_scriptRunning = running;
     if (running)
     {
-        m_scriptLabel->setText(QStringLiteral("\u25CF")); // ● filled circle
+        m_scriptLabel->setText(QStringLiteral("\u25CF")); // * filled circle
         QPalette p = m_scriptLabel->palette();
         p.setColor(QPalette::WindowText, QColor(0, 220, 0));
         m_scriptLabel->setPalette(p);
@@ -155,9 +155,9 @@ QString StatusLine::statusText(CharacterStatus status)
     switch (status)
     {
         case CharacterStatus::Disconnected:  return QStringLiteral("Disconnected");
-        case CharacterStatus::Connecting:    return QStringLiteral("Connecting…");
+        case CharacterStatus::Connecting:    return QStringLiteral("Connecting...");
         case CharacterStatus::Connected:     return QStringLiteral("Connected");
-        case CharacterStatus::Reconnecting:  return QStringLiteral("Reconnecting…");
+        case CharacterStatus::Reconnecting:  return QStringLiteral("Reconnecting...");
         case CharacterStatus::Suspended:     return QStringLiteral("Suspended");
         case CharacterStatus::Error:         return QStringLiteral("Error");
     }

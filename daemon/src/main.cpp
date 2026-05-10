@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        QStringLiteral("MeagreMUD daemon — manages character sessions"));
+        QStringLiteral("MeagreMUD daemon  -  manages character sessions"));
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     // Startup
     // -----------------------------------------------------------------------
 
-    qInfo() << "MeagreMUD daemon starting up…";
+    qInfo() << "MeagreMUD daemon starting up...";
 
     // -----------------------------------------------------------------------
     // Database
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     DatabaseManager db;
     if (!db.open(mainDbPath, seedDbPath))
     {
-        qCritical() << "Failed to open database — aborting.";
+        qCritical() << "Failed to open database  -  aborting.";
         return 1;
     }
 

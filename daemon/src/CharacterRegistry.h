@@ -53,7 +53,7 @@ public:
      * If a session with @p characterId already exists, returns the existing
      * session with a warning rather than creating a duplicate.
      *
-     * @param characterId   Unique 1-based identifier (1–16).
+     * @param characterId   Unique 1-based identifier (1 - 16).
      * @param characterName Display name for the GUI and logs.
      * @return Pointer to the session (owned by the registry). Never null.
      */

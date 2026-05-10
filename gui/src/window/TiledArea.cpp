@@ -3,6 +3,6 @@
 TiledArea::TiledArea(QWidget *parent)
     : QWidget(parent)
 {
-    // Placeholder — hidden until panes are added
+    // Placeholder  -  hidden until panes are added
     setVisible(false);
 }

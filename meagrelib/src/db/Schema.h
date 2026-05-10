@@ -36,8 +36,8 @@
 //   Current schema version: 1
 //
 // Two-database architecture:
-//   seed.db    — read-only, Seeded_* tables + SeedMeta
-//   meagremud.db — read-write, user tables + Seeded_* copies + Meta + views
+//   seed.db     -  read-only, Seeded_* tables + SeedMeta
+//   meagremud.db  -  read-write, user tables + Seeded_* copies + Meta + views
 //
 // View convention:
 //   v_Room, v_Monster, v_Item, v_RoomExit, v_RoomMonster
@@ -54,7 +54,7 @@ namespace Schema {
 static constexpr int CURRENT_SCHEMA_VERSION = 1;
 
 // ---------------------------------------------------------------------------
-// meagremud.db — Meta table
+// meagremud.db  -  Meta table
 // ---------------------------------------------------------------------------
 
 static constexpr const char *CREATE_META = R"SQL(
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS Meta (
 )SQL";
 
 // ---------------------------------------------------------------------------
-// meagremud.db — Core hierarchy
+// meagremud.db  -  Core hierarchy
 // ---------------------------------------------------------------------------
 
 static constexpr const char *CREATE_MUD_SERVER = R"SQL(
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS SessionLog (
 )SQL";
 
 // ---------------------------------------------------------------------------
-// Display / input settings (three-level inheritance: global → MudServer → Character)
+// Display / input settings (three-level inheritance: global -> MudServer -> Character)
 // ---------------------------------------------------------------------------
 
 static constexpr const char *CREATE_DISPLAY_SETTINGS = R"SQL(
@@ -257,12 +257,12 @@ CREATE TABLE IF NOT EXISTS PartyTrigger (
 )SQL";
 
 // ---------------------------------------------------------------------------
-// World knowledge — user layer
+// World knowledge  -  user layer
 //
 // source_id NULL  = user-created record (never touched by seed reload)
 // source_id set   = promoted from seed (user has customised this record)
 //
-// is_verified and fingerprint on Room are never overwritten by seed reload —
+// is_verified and fingerprint on Room are never overwritten by seed reload  - 
 // they are owned by live play via the daemon's relearn mechanism.
 // ---------------------------------------------------------------------------
 
@@ -420,7 +420,7 @@ CREATE TABLE IF NOT EXISTS SeedMeta (
 )SQL";
 
 // ---------------------------------------------------------------------------
-// Views — merge seeded and user layers
+// Views  -  merge seeded and user layers
 //
 // User record wins over seeded record where source_id matches.
 // user_owned = 1 for user records, 0 for seeded fallbacks.

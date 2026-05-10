@@ -14,7 +14,7 @@
  * @brief Collapsible drawer that displays attention events from all characters.
  *
  * Sits above the QTabWidget in MainWindow. When collapsed, shows a badge
- * "⚠ N issues". When expanded, shows a scrollable list of entries, each
+ * "[!] N issues". When expanded, shows a scrollable list of entries, each
  * displaying:
  * - Character identifier
  * - Event description

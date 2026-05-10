@@ -182,7 +182,7 @@ QString DatabaseManager::appliedSeedVersion() const
 }
 
 // ---------------------------------------------------------------------------
-// Private — open databases
+// Private  -  open databases
 // ---------------------------------------------------------------------------
 
 bool DatabaseManager::openMainDb(const QString &path)
@@ -231,7 +231,7 @@ bool DatabaseManager::openSeedDb(const QString &path)
 }
 
 // ---------------------------------------------------------------------------
-// Private — schema creation
+// Private  -  schema creation
 // ---------------------------------------------------------------------------
 
 bool DatabaseManager::createSchema()
@@ -267,7 +267,7 @@ bool DatabaseManager::createSchema()
 }
 
 // ---------------------------------------------------------------------------
-// Private — migrations
+// Private  -  migrations
 // ---------------------------------------------------------------------------
 
 bool DatabaseManager::runMigrations()
@@ -284,7 +284,7 @@ bool DatabaseManager::runMigrations()
         qWarning() << "DatabaseManager: database schema version" << current
                    << "is newer than application version"
                    << Schema::CURRENT_SCHEMA_VERSION
-                   << "— proceeding with caution";
+                   << " -  proceeding with caution";
         return true;
     }
 
@@ -297,7 +297,7 @@ bool DatabaseManager::runMigrations()
     {
         switch (v)
         {
-            // Version 1 is the initial schema — no migration needed,
+            // Version 1 is the initial schema  -  no migration needed,
             // createSchema() handles it.
             case 1:
                 break;
@@ -316,7 +316,7 @@ bool DatabaseManager::runMigrations()
 }
 
 // ---------------------------------------------------------------------------
-// Private — seed reload
+// Private  -  seed reload
 // ---------------------------------------------------------------------------
 
 bool DatabaseManager::checkAndReloadSeed()
@@ -343,7 +343,7 @@ bool DatabaseManager::checkAndReloadSeed()
     if (seedVersion == appliedVersion)
     {
         qDebug() << "DatabaseManager: seed version" << seedVersion
-                 << "already applied — no reload needed";
+                 << "already applied  -  no reload needed";
         m_seedLoaded = true;
         return true;
     }
@@ -354,7 +354,7 @@ bool DatabaseManager::checkAndReloadSeed()
         fromVersion = QStringLiteral("(none)");
     }
     qInfo() << "DatabaseManager: seed version changed from"
-            << fromVersion << "to" << seedVersion << "— reloading";
+            << fromVersion << "to" << seedVersion << " -  reloading";
 
     return reloadSeedTables();
 }
@@ -451,7 +451,7 @@ bool DatabaseManager::reloadSeedTables()
     mainDb.commit();
 
     m_seedLoaded = true;
-    qInfo() << "DatabaseManager: seed reload complete — version" << newVersion;
+    qInfo() << "DatabaseManager: seed reload complete  -  version" << newVersion;
     emit seedReloaded(newVersion);
     return true;
 }

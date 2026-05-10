@@ -107,7 +107,7 @@ void SettingsDialog::onApply()
 }
 
 // ---------------------------------------------------------------------------
-// Tab builders — stubs
+// Tab builders  -  stubs
 // ---------------------------------------------------------------------------
 
 QWidget *SettingsDialog::buildServersAndCharactersTab()
@@ -115,7 +115,7 @@ QWidget *SettingsDialog::buildServersAndCharactersTab()
     auto *w = new QWidget();
     auto *layout = new QVBoxLayout(w);
     layout->addWidget(new QLabel(
-        QStringLiteral("Servers & Characters — not yet implemented."), w));
+        QStringLiteral("Servers & Characters  -  not yet implemented."), w));
     layout->addStretch();
     return w;
 }
@@ -125,7 +125,7 @@ QWidget *SettingsDialog::buildDisplayTab()
     auto *w = new QWidget();
     auto *layout = new QVBoxLayout(w);
     layout->addWidget(new QLabel(
-        QStringLiteral("Display settings — not yet implemented."), w));
+        QStringLiteral("Display settings  -  not yet implemented."), w));
     layout->addStretch();
     return w;
 }
@@ -135,7 +135,7 @@ QWidget *SettingsDialog::buildKeyMacrosTab()
     auto *w = new QWidget();
     auto *layout = new QVBoxLayout(w);
     layout->addWidget(new QLabel(
-        QStringLiteral("Key Macros — not yet implemented."), w));
+        QStringLiteral("Key Macros  -  not yet implemented."), w));
     layout->addStretch();
     return w;
 }
@@ -145,7 +145,7 @@ QWidget *SettingsDialog::buildTriggersTab()
     auto *w = new QWidget();
     auto *layout = new QVBoxLayout(w);
     layout->addWidget(new QLabel(
-        QStringLiteral("Triggers & Automation — not yet implemented."), w));
+        QStringLiteral("Triggers & Automation  -  not yet implemented."), w));
     layout->addStretch();
     return w;
 }
@@ -155,7 +155,7 @@ QWidget *SettingsDialog::buildServerQuirksTab()
     auto *w = new QWidget();
     auto *layout = new QVBoxLayout(w);
     layout->addWidget(new QLabel(
-        QStringLiteral("Server Quirks — not yet implemented."), w));
+        QStringLiteral("Server Quirks  -  not yet implemented."), w));
     layout->addStretch();
     return w;
 }

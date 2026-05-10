@@ -13,7 +13,7 @@ CharacterSession::CharacterSession(quint8 characterId,
     , m_characterId(characterId)
     , m_characterName(characterName)
 {
-    // No socket creation here — see init()
+    // No socket creation here  -  see init()
 }
 
 CharacterSession::~CharacterSession()
@@ -58,7 +58,7 @@ void CharacterSession::stop()
 
 void CharacterSession::init()
 {
-    // This runs on the session thread — safe to create the socket here
+    // This runs on the session thread  -  safe to create the socket here
     m_mudSocket = new QTcpSocket(this);
 
     connect(m_mudSocket, &QTcpSocket::connected,
@@ -70,7 +70,7 @@ void CharacterSession::init()
     connect(m_mudSocket, &QTcpSocket::readyRead,
             this, &CharacterSession::onMudReadyRead);
 
-    // AnsiParser — created here on the session thread
+    // AnsiParser  -  created here on the session thread
     m_ansiParser = new AnsiParser(this);
 
     connect(m_ansiParser, &AnsiParser::runReady,
@@ -147,7 +147,7 @@ void CharacterSession::onMudDisconnected()
 
     setStatus(CharacterStatus::Reconnecting);
     qDebug() << "CharacterSession: character" << m_characterId
-             << "disconnected — scheduling reconnect";
+             << "disconnected  -  scheduling reconnect";
 
     if (!m_reconnectTimer.isActive())
     {
@@ -207,7 +207,7 @@ void CharacterSession::onRunReady(StyledRun run)
 void CharacterSession::onScreenCleared()
 {
     // TODO: notify GUIs to clear their backbuffers.
-    // For now just log — the MSG_STYLED_RUN stream already handles
+    // For now just log  -  the MSG_STYLED_RUN stream already handles
     // display; a dedicated clear message will be added when needed.
     qDebug() << "CharacterSession: character" << m_characterId
              << "screen cleared (ESC[2J)";

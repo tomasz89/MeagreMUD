@@ -5,7 +5,7 @@
 /**
  * @file Protocol.h
  * @brief Wire protocol constants, message type codes, and sub-type enumerations
- *        for the MeagreMUD daemon ↔ GUI binary protocol.
+ *        for the MeagreMUD daemon <-> GUI binary protocol.
  *
  * Frame header layout (8 bytes):
  * @code
@@ -15,7 +15,7 @@
  * - @c character_id 0x00 is reserved for daemon-level (non-character) messages.
  * - @c flags is reserved; always set to 0.
  * - @c sequence is a monotonic counter; rollover is detectable.
- * - Maximum 16 characters per daemon (character_id 1–16).
+ * - Maximum 16 characters per daemon (character_id 1 - 16).
  */
 
 // ---------------------------------------------------------------------------
@@ -35,78 +35,78 @@ static constexpr quint8 CHARACTER_ID_DAEMON  = 0x00;
 // Message type codes
 // ---------------------------------------------------------------------------
 
-/// @name Handshake / Session (0x00–0x0F)
+/// @name Handshake / Session (0x00 - 0x0F)
 /// @{
-static constexpr quint8 MSG_CLIENT_HELLO     = 0x00; ///< GUI → Daemon: open handshake.
-static constexpr quint8 MSG_SERVER_HELLO     = 0x01; ///< Daemon → GUI: handshake accepted.
-static constexpr quint8 MSG_SERVER_REJECT    = 0x02; ///< Daemon → GUI: handshake rejected.
+static constexpr quint8 MSG_CLIENT_HELLO     = 0x00; ///< GUI -> Daemon: open handshake.
+static constexpr quint8 MSG_SERVER_HELLO     = 0x01; ///< Daemon -> GUI: handshake accepted.
+static constexpr quint8 MSG_SERVER_REJECT    = 0x02; ///< Daemon -> GUI: handshake rejected.
 static constexpr quint8 MSG_PING             = 0x03; ///< Either direction: keepalive ping.
 static constexpr quint8 MSG_PONG             = 0x04; ///< Either direction: keepalive reply.
 static constexpr quint8 MSG_GOODBYE          = 0x05; ///< Either direction: clean disconnect.
-static constexpr quint8 MSG_RESYNC_REQUEST   = 0x06; ///< GUI → Daemon: request full state dump.
-static constexpr quint8 MSG_RESYNC_ACK       = 0x07; ///< Daemon → GUI: resync starting.
+static constexpr quint8 MSG_RESYNC_REQUEST   = 0x06; ///< GUI -> Daemon: request full state dump.
+static constexpr quint8 MSG_RESYNC_ACK       = 0x07; ///< Daemon -> GUI: resync starting.
 /// @}
 
-/// @name Character State / Dump (0x10–0x1F)
+/// @name Character State / Dump (0x10 - 0x1F)
 /// @{
-static constexpr quint8 MSG_CHARACTER_INFO      = 0x10; ///< Daemon → GUI: character metadata.
-static constexpr quint8 MSG_BACKBUFFER_BEGIN     = 0x11; ///< Daemon → GUI: start of backbuffer dump.
-static constexpr quint8 MSG_BACKBUFFER_LINE      = 0x12; ///< Daemon → GUI: one historical line.
-static constexpr quint8 MSG_BACKBUFFER_END       = 0x13; ///< Daemon → GUI: end of backbuffer dump.
-static constexpr quint8 MSG_CHARACTER_INFO_END   = 0x14; ///< Daemon → GUI: end of character info block.
+static constexpr quint8 MSG_CHARACTER_INFO      = 0x10; ///< Daemon -> GUI: character metadata.
+static constexpr quint8 MSG_BACKBUFFER_BEGIN     = 0x11; ///< Daemon -> GUI: start of backbuffer dump.
+static constexpr quint8 MSG_BACKBUFFER_LINE      = 0x12; ///< Daemon -> GUI: one historical line.
+static constexpr quint8 MSG_BACKBUFFER_END       = 0x13; ///< Daemon -> GUI: end of backbuffer dump.
+static constexpr quint8 MSG_CHARACTER_INFO_END   = 0x14; ///< Daemon -> GUI: end of character info block.
 /// @}
 
-/// @name Incremental Stream (0x20–0x2F)
+/// @name Incremental Stream (0x20 - 0x2F)
 /// @{
-static constexpr quint8 MSG_STYLED_RUN       = 0x20; ///< Daemon → GUI: one parsed StyledRun.
-static constexpr quint8 MSG_STATUS_CHANGE    = 0x21; ///< Daemon → GUI: character connection status changed.
-static constexpr quint8 MSG_INPUT_ECHO       = 0x22; ///< GUI → Daemon: user or script input text.
-static constexpr quint8 MSG_SERVER_MESSAGE   = 0x23; ///< Daemon → GUI: [MeagreMUD] prefixed system message.
+static constexpr quint8 MSG_STYLED_RUN       = 0x20; ///< Daemon -> GUI: one parsed StyledRun.
+static constexpr quint8 MSG_STATUS_CHANGE    = 0x21; ///< Daemon -> GUI: character connection status changed.
+static constexpr quint8 MSG_INPUT_ECHO       = 0x22; ///< GUI -> Daemon: user or script input text.
+static constexpr quint8 MSG_SERVER_MESSAGE   = 0x23; ///< Daemon -> GUI: [MeagreMUD] prefixed system message.
 /// @}
 
-/// @name Control (0x30–0x3F)
+/// @name Control (0x30 - 0x3F)
 /// @{
-static constexpr quint8 MSG_CONTROL_STATUS   = 0x30; ///< Daemon → GUI: current controller status.
-static constexpr quint8 MSG_REQUEST_CONTROL  = 0x31; ///< GUI → Daemon: request controller role.
-static constexpr quint8 MSG_CONTROL_GRANTED  = 0x32; ///< Daemon → GUI: this GUI is now controller.
-static constexpr quint8 MSG_CONTROL_REVOKED  = 0x33; ///< Daemon → GUI: this GUI is now observer.
-static constexpr quint8 MSG_CONTROL_DENIED   = 0x34; ///< Daemon → GUI: control request denied.
+static constexpr quint8 MSG_CONTROL_STATUS   = 0x30; ///< Daemon -> GUI: current controller status.
+static constexpr quint8 MSG_REQUEST_CONTROL  = 0x31; ///< GUI -> Daemon: request controller role.
+static constexpr quint8 MSG_CONTROL_GRANTED  = 0x32; ///< Daemon -> GUI: this GUI is now controller.
+static constexpr quint8 MSG_CONTROL_REVOKED  = 0x33; ///< Daemon -> GUI: this GUI is now observer.
+static constexpr quint8 MSG_CONTROL_DENIED   = 0x34; ///< Daemon -> GUI: control request denied.
 /// @}
 
-/// @name Scripting / Automation (0x40–0x4F)
+/// @name Scripting / Automation (0x40 - 0x4F)
 /// @{
-static constexpr quint8 MSG_SET_ENGINE_MODE      = 0x40; ///< GUI → Daemon: set engine mode for character.
-static constexpr quint8 MSG_SET_ACTIVE_PATH      = 0x41; ///< GUI → Daemon: set active path for character.
-static constexpr quint8 MSG_PREFLIGHT_REQUEST    = 0x42; ///< GUI → Daemon: run preflight check on path.
-static constexpr quint8 MSG_CLEAR_ATTENTION      = 0x43; ///< GUI → Daemon: dismiss an attention event.
-static constexpr quint8 MSG_STEP_OVERRIDE        = 0x44; ///< GUI → Daemon: override current path step.
-static constexpr quint8 MSG_ABORT_PATH           = 0x45; ///< GUI → Daemon: abort active path.
-static constexpr quint8 MSG_SET_COMBAT_FLAG      = 0x46; ///< GUI → Daemon: set combat flag for character.
-static constexpr quint8 MSG_STATS_RESET          = 0x47; ///< GUI → Daemon: reset session statistics odometer.
-static constexpr quint8 MSG_ENGINE_STATUS        = 0x48; ///< Daemon → GUI: engine state update.
-static constexpr quint8 MSG_PREFLIGHT_RESULT     = 0x49; ///< Daemon → GUI: preflight check results.
-static constexpr quint8 MSG_ATTENTION_EVENT      = 0x4A; ///< Daemon → GUI: attention event raised.
-static constexpr quint8 MSG_ATTENTION_CLEARED    = 0x4B; ///< Daemon → GUI: attention event dismissed.
-static constexpr quint8 MSG_ROOM_IDENTIFIED      = 0x4C; ///< Daemon → GUI: room identified from output.
-static constexpr quint8 MSG_STATS_UPDATE         = 0x4D; ///< Daemon → GUI: session statistics payload.
+static constexpr quint8 MSG_SET_ENGINE_MODE      = 0x40; ///< GUI -> Daemon: set engine mode for character.
+static constexpr quint8 MSG_SET_ACTIVE_PATH      = 0x41; ///< GUI -> Daemon: set active path for character.
+static constexpr quint8 MSG_PREFLIGHT_REQUEST    = 0x42; ///< GUI -> Daemon: run preflight check on path.
+static constexpr quint8 MSG_CLEAR_ATTENTION      = 0x43; ///< GUI -> Daemon: dismiss an attention event.
+static constexpr quint8 MSG_STEP_OVERRIDE        = 0x44; ///< GUI -> Daemon: override current path step.
+static constexpr quint8 MSG_ABORT_PATH           = 0x45; ///< GUI -> Daemon: abort active path.
+static constexpr quint8 MSG_SET_COMBAT_FLAG      = 0x46; ///< GUI -> Daemon: set combat flag for character.
+static constexpr quint8 MSG_STATS_RESET          = 0x47; ///< GUI -> Daemon: reset session statistics odometer.
+static constexpr quint8 MSG_ENGINE_STATUS        = 0x48; ///< Daemon -> GUI: engine state update.
+static constexpr quint8 MSG_PREFLIGHT_RESULT     = 0x49; ///< Daemon -> GUI: preflight check results.
+static constexpr quint8 MSG_ATTENTION_EVENT      = 0x4A; ///< Daemon -> GUI: attention event raised.
+static constexpr quint8 MSG_ATTENTION_CLEARED    = 0x4B; ///< Daemon -> GUI: attention event dismissed.
+static constexpr quint8 MSG_ROOM_IDENTIFIED      = 0x4C; ///< Daemon -> GUI: room identified from output.
+static constexpr quint8 MSG_STATS_UPDATE         = 0x4D; ///< Daemon -> GUI: session statistics payload.
 /// @}
 
-/// @name Recording (0x50–0x5F)
+/// @name Recording (0x50 - 0x5F)
 /// @{
-static constexpr quint8 MSG_RECORDING_START      = 0x50; ///< GUI → Daemon: begin recording for character.
-static constexpr quint8 MSG_RECORDING_STEP       = 0x51; ///< Daemon → GUI: one recorded command step.
-static constexpr quint8 MSG_RECORDING_STOP       = 0x52; ///< GUI → Daemon: stop recording.
+static constexpr quint8 MSG_RECORDING_START      = 0x50; ///< GUI -> Daemon: begin recording for character.
+static constexpr quint8 MSG_RECORDING_STEP       = 0x51; ///< Daemon -> GUI: one recorded command step.
+static constexpr quint8 MSG_RECORDING_STOP       = 0x52; ///< GUI -> Daemon: stop recording.
 /// @}
 
-/// @name Errors / Diagnostics (0xF0–0xFF)
+/// @name Errors / Diagnostics (0xF0 - 0xFF)
 /// @{
 static constexpr quint8 MSG_PROTOCOL_ERROR       = 0xF0; ///< Either direction: protocol error notification.
-static constexpr quint8 MSG_DIAGNOSTIC_INFO      = 0xF1; ///< Daemon → GUI: diagnostic text.
-static constexpr quint8 MSG_FATAL_ERROR          = 0xF2; ///< Daemon → GUI: unrecoverable error.
-static constexpr quint8 MSG_DEBUG_DUMP_REQUEST   = 0xF3; ///< GUI → Daemon: request debug dump.
-static constexpr quint8 MSG_DEBUG_DUMP_BEGIN     = 0xF4; ///< Daemon → GUI: debug dump starting.
-static constexpr quint8 MSG_DEBUG_DUMP_LINE      = 0xF5; ///< Daemon → GUI: one line of debug dump.
-static constexpr quint8 MSG_DEBUG_DUMP_END       = 0xF6; ///< Daemon → GUI: debug dump complete.
+static constexpr quint8 MSG_DIAGNOSTIC_INFO      = 0xF1; ///< Daemon -> GUI: diagnostic text.
+static constexpr quint8 MSG_FATAL_ERROR          = 0xF2; ///< Daemon -> GUI: unrecoverable error.
+static constexpr quint8 MSG_DEBUG_DUMP_REQUEST   = 0xF3; ///< GUI -> Daemon: request debug dump.
+static constexpr quint8 MSG_DEBUG_DUMP_BEGIN     = 0xF4; ///< Daemon -> GUI: debug dump starting.
+static constexpr quint8 MSG_DEBUG_DUMP_LINE      = 0xF5; ///< Daemon -> GUI: one line of debug dump.
+static constexpr quint8 MSG_DEBUG_DUMP_END       = 0xF6; ///< Daemon -> GUI: debug dump complete.
 /// @}
 
 // ---------------------------------------------------------------------------

@@ -18,7 +18,7 @@
  * Contains a TerminalWidget (top, stretches), StatusLine (fixed height),
  * and InputWidget (fixed height) stacked vertically. The same CharacterPane
  * instance is reparented when the user docks or undocks a character between
- * the QTabWidget and TiledArea — no state is lost on reparenting.
+ * the QTabWidget and TiledArea  -  no state is lost on reparenting.
  *
  * ## Observer mode
  * When the GUI is an observer rather than the controller, input is locked
@@ -38,7 +38,7 @@ class CharacterPane : public QWidget
 public:
     /**
      * @brief Construct the pane.
-     * @param characterId        Daemon character ID (1–16).
+     * @param characterId        Daemon character ID (1 - 16).
      * @param characterName      Display name shown in the status bar and tab.
      * @param backbufferCapacity Lines to retain in the terminal backbuffer.
      * @param parent             Qt parent widget.

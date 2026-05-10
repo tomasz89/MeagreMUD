@@ -17,8 +17,8 @@
  *
  * The state machine:
  * @code
- * Disconnected → Connecting → Syncing → Connected
- *                                ↑
+ * Disconnected -> Connecting -> Syncing -> Connected
+ *                                ^
  *                     (re-enters on ProtocolError)
  * @endcode
  *

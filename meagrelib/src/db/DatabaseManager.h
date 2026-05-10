@@ -20,9 +20,9 @@
  * @brief Central database access point for the daemon and scraper.
  *
  * Owns two named QSqlDatabase connections:
- * - @c "meagre_main" — @c meagremud.db, read-write. Contains user data,
+ * - @c "meagre_main"  -  @c meagremud.db, read-write. Contains user data,
  *   Seeded_* copies, and the v_* views.
- * - @c "meagre_seed" — @c seed.db, read-only. Contains seeded world knowledge
+ * - @c "meagre_seed"  -  @c seed.db, read-only. Contains seeded world knowledge
  *   as shipped with MeagreMUD.
  *
  * On open():
@@ -47,9 +47,9 @@
  * @brief Manages both the main read-write database and the read-only seed database.
  *
  * DatabaseManager is the **sole class** aware of the dual-table architecture:
- * - @c meagremud.db — read-write user database containing user tables, copies
+ * - @c meagremud.db  -  read-write user database containing user tables, copies
  *   of the seeded world knowledge in @c Seeded_* tables, and the @c Meta table.
- * - @c seed.db — read-only, ships with MeagreMUD, produced by @c meagre-scrape.
+ * - @c seed.db  -  read-only, ships with MeagreMUD, produced by @c meagre-scrape.
  *
  * On startup, DatabaseManager compares @c SeedMeta.seed_version from
  * @c seed.db against @c Meta.applied_seed_version in @c meagremud.db. If they
@@ -117,7 +117,7 @@ public:
     /**
      * @brief Returns the main read-write database connection.
      *
-     * Do not cache the returned object across calls — connections can be
+     * Do not cache the returned object across calls  -  connections can be
      * invalidated by close().
      *
      * @return A QSqlDatabase handle to @c meagremud.db.
@@ -137,7 +137,7 @@ public:
     /**
      * @brief Executes a parameterised SQL statement on the main database.
      *
-     * Parameters are bound positionally (index 0, 1, 2, …) from @p bindings.
+     * Parameters are bound positionally (index 0, 1, 2, ...) from @p bindings.
      * Logs a warning on failure.
      *
      * @param sql      Prepared SQL statement (use @c ? placeholders).

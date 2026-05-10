@@ -15,7 +15,7 @@
 
 /**
  * @brief Custom terminal display widget rendering a circular backbuffer of
- *        StyledRun lines. Uses a pure paintEvent — no QTextEdit, no HTML.
+ *        StyledRun lines. Uses a pure paintEvent  -  no QTextEdit, no HTML.
  *
  * ## Backbuffer rules
  * - Capacity is fixed at construction time. Changing it requires re-creating
@@ -25,7 +25,7 @@
  *   rendered immediately as runs arrive and closed only when @c \\n appears
  *   within a run's text.
  * - @c \\n closes the current open line and opens a new one.
- *   @c \\n is never a flush trigger — runs arrive pre-flushed by AnsiParser.
+ *   @c \\n is never a flush trigger  -  runs arrive pre-flushed by AnsiParser.
  * - @c \\r without a following @c \\n overwrites (clears) the open line.
  *
  * ## Scrollback
@@ -35,7 +35,7 @@
  *   has actively scrolled up (scrollbar not at maximum).
  *
  * ## Palette
- * - 16-colour ANSI palette: indices 0–7 normal, 8–15 bright.
+ * - 16-colour ANSI palette: indices 0 - 7 normal, 8 - 15 bright.
  * - Default: black background, light grey foreground.
  * - COLOUR_DEFAULT (0xFF) maps to the configured default fg or bg colour.
  *
@@ -99,7 +99,7 @@ public:
 
     /**
      * @brief Set a palette colour by index.
-     * @param index   Palette index 0–15.
+     * @param index   Palette index 0 - 15.
      * @param colour  Colour to assign.
      */
     void setColour(int index, const QColor &colour);
@@ -118,7 +118,7 @@ public:
 
     /**
      * @brief Get a palette colour by index.
-     * @param index  Palette index 0–15.
+     * @param index  Palette index 0 - 15.
      * @return       The colour at that index, or defaultForeground() if out of range.
      */
     QColor colour(int index) const;

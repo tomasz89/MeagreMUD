@@ -10,7 +10,7 @@
 // Each pane is sized to an equal fraction of the available area, with height
 // snapped to whole display lines.
 //
-// This is a placeholder skeleton — layout logic is implemented once
+// This is a placeholder skeleton  -  layout logic is implemented once
 // CharacterPane and TerminalWidget are complete.
 // ---------------------------------------------------------------------------
 

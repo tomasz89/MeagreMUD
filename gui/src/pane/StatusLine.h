@@ -15,7 +15,7 @@
  * @brief Horizontal status bar showing per-character runtime state.
  *
  * Uses a row of QLabel segments separated by vertical QFrame dividers.
- * All segments update independently via individual setter methods —
+ * All segments update independently via individual setter methods  - 
  * no polling, no full-bar repaints.
  *
  * ## Layout (left to right)
@@ -25,9 +25,9 @@
  * | Server name | Updatable via setServerName() |
  * | Connection status | Colour-coded text |
  * | Engine mode | Off / Semi / Auto |
- * | Combat flag | ⚔ (Attack) or blank (Passive) |
+ * | Combat flag | [sword] (Attack) or blank (Passive) |
  * | Room name | Stretches to fill available width |
- * | Script indicator | ● (green) when script active |
+ * | Script indicator | * (green) when script active |
  *
  * ## Status colours
  * | Status | Colour |
@@ -71,7 +71,7 @@ public:
     /**
      * @brief Update the combat flag segment.
      *
-     * Shows ⚔ when Attack, blank when Passive.
+     * Shows [sword] when Attack, blank when Passive.
      *
      * @param flag  New combat flag value.
      */
@@ -85,7 +85,7 @@ public:
 
     /**
      * @brief Update the script running indicator.
-     * @param running  @c true to show the green ● indicator; @c false to hide it.
+     * @param running  @c true to show the green * indicator; @c false to hide it.
      */
     void setScriptRunning(bool running);
 
@@ -105,9 +105,9 @@ private:
     QLabel *m_serverLabel    = nullptr; ///< Server/BBS name.
     QLabel *m_statusLabel    = nullptr; ///< Connection status text (colour-coded).
     QLabel *m_engineLabel    = nullptr; ///< Engine mode text.
-    QLabel *m_combatLabel    = nullptr; ///< Combat flag icon (⚔ or blank).
+    QLabel *m_combatLabel    = nullptr; ///< Combat flag icon ([sword] or blank).
     QLabel *m_roomLabel      = nullptr; ///< Current room name (stretches).
-    QLabel *m_scriptLabel    = nullptr; ///< Script running indicator (● or blank).
+    QLabel *m_scriptLabel    = nullptr; ///< Script running indicator (* or blank).
 
     CharacterStatus m_status       = CharacterStatus::Disconnected;
     EngineMode      m_engineMode   = EngineMode::Off;

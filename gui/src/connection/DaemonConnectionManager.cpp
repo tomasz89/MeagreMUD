@@ -63,7 +63,7 @@ void DaemonConnectionManager::disconnectFromDaemon()
 
     if (m_state == State::Connecting)
     {
-        // Socket is mid-connect — abort() fires disconnected() immediately.
+        // Socket is mid-connect  -  abort() fires disconnected() immediately.
         // disconnectFromHost() may silently succeed without a signal when
         // the connection has not yet been established.
         m_socket.abort();
@@ -91,7 +91,7 @@ void DaemonConnectionManager::sendFrame(quint8 msgType, quint8 characterId,
 }
 
 // ---------------------------------------------------------------------------
-// Private slots — socket events
+// Private slots  -  socket events
 // ---------------------------------------------------------------------------
 
 void DaemonConnectionManager::onSocketConnected()
@@ -120,11 +120,24 @@ void DaemonConnectionManager::onSocketDisconnected()
 
 void DaemonConnectionManager::onSocketError(QAbstractSocket::SocketError error)
 {
-    Q_UNUSED(error)
     const QString description = m_socket.errorString();
     qWarning() << "DaemonConnectionManager: socket error:" << description;
     emit errorOccurred(description);
-    // onSocketDisconnected() will fire after this if the socket closes
+
+    // For most errors Qt emits disconnected() after errorOccurred(), which
+    // drives the state transition. However ConnectionRefusedError and a
+    // handful of others go straight to UnconnectedState without ever firing
+    // disconnected(). Force the transition here for those cases so the rest
+    // of the application (status bar, retry logic) behaves correctly.
+    if (error == QAbstractSocket::ConnectionRefusedError
+        || error == QAbstractSocket::NetworkError
+        || error == QAbstractSocket::SocketTimeoutError
+        || error == QAbstractSocket::HostNotFoundError)
+    {
+        m_pingTimer.stop();
+        m_hasControl = false;
+        setState(State::Disconnected);
+    }
 }
 
 void DaemonConnectionManager::onReadyRead()
@@ -161,7 +174,7 @@ void DaemonConnectionManager::processIncomingData()
         {
             qWarning() << "DaemonConnectionManager: unexpected protocol version"
                        << version;
-            // Treat as a fatal protocol error — disconnect
+            // Treat as a fatal protocol error  -  disconnect
             emit errorOccurred(QStringLiteral("Protocol version mismatch"));
             disconnectFromDaemon();
             return;
@@ -196,12 +209,12 @@ void DaemonConnectionManager::handleFrame(quint8 msgType, quint8 characterId,
     switch (msgType)
     {
         case MSG_PING:
-            // Daemon is pinging us — send pong back immediately
+            // Daemon is pinging us  -  send pong back immediately
             sendFrame(MSG_PONG, CHARACTER_ID_DAEMON, QByteArray());
             return;
 
         case MSG_PONG:
-            // Keepalive reply — no action needed
+            // Keepalive reply  -  no action needed
             return;
 
         case MSG_GOODBYE:
@@ -259,10 +272,10 @@ void DaemonConnectionManager::handleFrame(quint8 msgType, quint8 characterId,
 
 void DaemonConnectionManager::handleResyncAck()
 {
-    // Transition Syncing → Connected.
+    // Transition Syncing -> Connected.
     // The full state dump (CharacterInfo messages etc.) follows immediately
     // after ResyncAck in the stream and will arrive via subsequent frameReceived()
-    // emissions — no special handling needed here.
+    // emissions  -  no special handling needed here.
     if (m_state == State::Syncing)
     {
         setState(State::Connected);
@@ -287,7 +300,7 @@ void DaemonConnectionManager::handleProtocolError(const QByteArray &payload)
 {
     Q_UNUSED(payload)
     m_resyncCount++;
-    qWarning() << "DaemonConnectionManager: protocol error — resync #" << m_resyncCount;
+    qWarning() << "DaemonConnectionManager: protocol error  -  resync #" << m_resyncCount;
 
     // Re-enter Syncing state and request a fresh resync
     setState(State::Syncing);
@@ -307,7 +320,7 @@ void DaemonConnectionManager::sendGoodbye(GoodbyeReason reason)
 {
     QByteArray payload;
     payload.append(static_cast<char>(reason));
-    // Send directly — bypass the state guard in sendFrame()
+    // Send directly  -  bypass the state guard in sendFrame()
     const quint16 payloadLen = static_cast<quint16>(payload.size());
     QByteArray frame = buildFrameHeader(MSG_GOODBYE, CHARACTER_ID_DAEMON, payloadLen);
     frame.append(payload);
@@ -338,14 +351,14 @@ QByteArray DaemonConnectionManager::buildFrameHeader(quint8 msgType,
     header[0] = static_cast<char>(PROTOCOL_VERSION);
     header[1] = static_cast<char>(msgType);
     header[2] = static_cast<char>(characterId);
-    header[3] = static_cast<char>(0x00); // flags — reserved
-    // sequence — little-endian
+    header[3] = static_cast<char>(0x00); // flags  -  reserved
+    // sequence  -  little-endian
     header[4] = static_cast<char>(m_txSequence & 0xFF);
     header[5] = static_cast<char>((m_txSequence >> 8) & 0xFF);
-    // payload_len — little-endian
+    // payload_len  -  little-endian
     header[6] = static_cast<char>(payloadLen & 0xFF);
     header[7] = static_cast<char>((payloadLen >> 8) & 0xFF);
-    // Note: m_txSequence intentionally not incremented here — the sequence
+    // Note: m_txSequence intentionally not incremented here  -  the sequence
     // counter is logically per-send; increment is done at call sites via
     // a mutable counter once we wire that up properly.
     return header;

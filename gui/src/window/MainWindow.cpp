@@ -40,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Start in disconnected state
     updateConnectionUi(DaemonConnectionManager::State::Disconnected);
 
-    // Wire retry timer — single-shot, reconnects on timeout
+    // Wire retry timer  -  single-shot, reconnects on timeout
     m_retryTimer.setSingleShot(true);
     connect(&m_retryTimer, &QTimer::timeout, this, [this]()
     {
@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
             && m_connectionManager.state() == DaemonConnectionManager::State::Disconnected)
         {
             statusBar()->showMessage(
-                QStringLiteral("[MeagreMUD] Retrying connection to %1â¦")
+                QStringLiteral("[MeagreMUD] Retrying connection to %1...")
                     .arg(m_retryProfile));
             onConnectRequested(m_retryProfile);
         }
@@ -72,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     // Disconnect cleanly before Qt tears down the socket and event loop.
-    // DaemonConnectionManager is a value member — its destructor would
+    // DaemonConnectionManager is a value member  -  its destructor would
     // otherwise call sendGoodbye() during object teardown when the
     // underlying socket may already be in an invalid state.
     m_connectionManager.disconnectFromDaemon();
@@ -87,7 +87,7 @@ void MainWindow::setupMenuBar()
     // File menu
     QMenu *fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
 
-    m_connectAction = fileMenu->addAction(QStringLiteral("&Connection…"));
+    m_connectAction = fileMenu->addAction(QStringLiteral("&Connection..."));
     connect(m_connectAction, &QAction::triggered,
             this, &MainWindow::onActionConnect);
 
@@ -119,14 +119,14 @@ void MainWindow::setupMenuBar()
     QMenu *toolsMenu = menuBar()->addMenu(QStringLiteral("&Tools"));
 
     m_pathEditorAction = toolsMenu->addAction(
-        QStringLiteral("&Path Editor…"));
+        QStringLiteral("&Path Editor..."));
     connect(m_pathEditorAction, &QAction::triggered,
             this, &MainWindow::onActionPathEditor);
 
     toolsMenu->addSeparator();
 
     m_settingsAction = toolsMenu->addAction(
-        QStringLiteral("&Settings…"));
+        QStringLiteral("&Settings..."));
     m_settingsAction->setShortcut(QKeySequence::Preferences);
     connect(m_settingsAction, &QAction::triggered,
             this, &MainWindow::onActionSettings);
@@ -146,17 +146,17 @@ void MainWindow::setupCentralWidget()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    // Tiled overview — hidden until panes are added to it
+    // Tiled overview  -  hidden until panes are added to it
     m_tiledArea = new TiledArea(central);
     layout->addWidget(m_tiledArea);
 
-    // Attention panel drawer — sits above tab bar
+    // Attention panel drawer  -  sits above tab bar
     m_attentionPanel = new AttentionPanel(central);
     layout->addWidget(m_attentionPanel);
     connect(m_attentionPanel, &AttentionPanel::dismissRequested,
             this, &MainWindow::onDismissRequested);
 
-    // Tab widget — one tab per docked character
+    // Tab widget  -  one tab per docked character
     m_tabWidget = new QTabWidget(central);
     m_tabWidget->setTabsClosable(false);
     m_tabWidget->setMovable(true);
@@ -231,7 +231,7 @@ void MainWindow::scheduleRetry(const QString &profile)
     m_retryProfile = profile;
     m_retryTimer.start(RETRY_INTERVAL_MS);
     statusBar()->showMessage(
-        QStringLiteral("[MeagreMUD] Connection failed â retrying in %1sâ¦")
+        QStringLiteral("[MeagreMUD] Connection failed - retrying in %1s...")
             .arg(RETRY_INTERVAL_MS / 1000));
 }
 
@@ -263,7 +263,7 @@ void MainWindow::saveAutoConnect(bool enabled)
 
 void MainWindow::onActionPathEditor()
 {
-    // PathEditor window — implemented separately
+    // PathEditor window  -  implemented separately
     QMessageBox::information(this, QStringLiteral("Path Editor"),
                              QStringLiteral("Path Editor not yet implemented."));
 }
@@ -281,7 +281,7 @@ void MainWindow::onActionAbout()
         QStringLiteral(
             "<b>MeagreMUD</b> v0.1.0<br>"
             "Open source MegaMUD clone.<br>"
-            "GPL-3.0 — targeting GreaterMUD / MajorMUD servers."));
+            "GPL-3.0  -  targeting GreaterMUD / MajorMUD servers."));
 }
 
 // ---------------------------------------------------------------------------
@@ -318,7 +318,7 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
             break;
 
         case DaemonConnectionManager::State::Syncing:
-            // Lock inputs until ResyncAck — panes dimmed, only Disconnect available
+            // Lock inputs until ResyncAck  -  panes dimmed, only Disconnect available
             lockAllPanes(true);
 
             if (m_connectionManager.resyncCount() > 0)
@@ -331,7 +331,7 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
             break;
 
         case DaemonConnectionManager::State::Connected:
-            // Unlock inputs — observer mode governed separately by hasControl
+            // Unlock inputs  -  observer mode governed separately by hasControl
             lockAllPanes(false);
             break;
     }
@@ -397,15 +397,15 @@ void MainWindow::onFrameReceived(quint8 msgType, quint8 characterId,
             break;
 
         case MSG_PING:
-            // Should be handled by DaemonConnectionManager — ignore if it leaks through
+            // Should be handled by DaemonConnectionManager  -  ignore if it leaks through
             return;
 
         case MSG_PONG:
-            // Keepalive — no action needed
+            // Keepalive  -  no action needed
             return;
 
         case MSG_GOODBYE:
-            // Daemon disconnecting — DaemonConnectionManager handles state transition
+            // Daemon disconnecting  -  DaemonConnectionManager handles state transition
             return;
 
         default:
@@ -442,7 +442,7 @@ void MainWindow::handleCharacterInfoEnd(quint8 characterId)
 {
     Q_UNUSED(characterId)
     // All CharacterInfo messages for the resync dump have been received.
-    // Nothing to do at this level — panes are already created.
+    // Nothing to do at this level  -  panes are already created.
 }
 
 void MainWindow::handleServerHello(quint8 characterId,
@@ -459,7 +459,7 @@ void MainWindow::handleServerHello(quint8 characterId,
     const quint8 serverFlags     = static_cast<quint8>(payload[1]);
     const quint8 numCharacters   = static_cast<quint8>(payload[2]);
 
-    qDebug() << "MainWindow: ServerHello received — protocol v" << protocolVersion
+    qDebug() << "MainWindow: ServerHello received  -  protocol v" << protocolVersion
              << ", flags" << Qt::hex << serverFlags
              << ", characters:" << numCharacters;
 }
@@ -518,7 +518,7 @@ void MainWindow::handleServerMessage(quint8 characterId,
     {
         return;
     }
-    // Rendered with [MeagreMUD] prefix in blue — TerminalWidget handles this
+    // Rendered with [MeagreMUD] prefix in blue  -  TerminalWidget handles this
 }
 
 void MainWindow::handleAttentionEvent(quint8 characterId,
@@ -625,7 +625,7 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
 
         case DaemonConnectionManager::State::Connecting:
             m_statusLabel->setText(
-                QStringLiteral("Connecting to %1:%2…")
+                QStringLiteral("Connecting to %1:%2...")
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port()));
             m_connectAction->setEnabled(true);
@@ -636,7 +636,7 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
 
         case DaemonConnectionManager::State::Syncing:
             m_statusLabel->setText(
-                QStringLiteral("Syncing with %1:%2…")
+                QStringLiteral("Syncing with %1:%2...")
                     .arg(m_connectionManager.host())
                     .arg(m_connectionManager.port()));
             m_connectAction->setEnabled(true);

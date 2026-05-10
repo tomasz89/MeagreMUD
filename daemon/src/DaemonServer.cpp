@@ -44,7 +44,7 @@ bool DaemonServer::listen(const QHostAddress &address, quint16 port)
     {
         qCritical() << "DaemonServer: failed to listen on"
                     << address.toString() << ":" << port
-                    << "—" << m_server.errorString();
+                    << " - " << m_server.errorString();
         return false;
     }
 
@@ -72,7 +72,7 @@ quint16 DaemonServer::serverPort() const
 }
 
 // ---------------------------------------------------------------------------
-// Broadcast slots — called from main thread via queued connection
+// Broadcast slots  -  called from main thread via queued connection
 // ---------------------------------------------------------------------------
 
 void DaemonServer::broadcastStyledRun(quint8 characterId, StyledRun run)
@@ -155,7 +155,7 @@ void DaemonServer::onGuiDisconnected(GuiConnection *connection)
         .arg(connection->connectionId());
     if (wasController)
     {
-        connInfo += QStringLiteral(" — was controller)");
+        connInfo += QStringLiteral("  -  was controller)");
     }
     else
     {
@@ -195,7 +195,7 @@ void DaemonServer::onGuiResyncRequested(GuiConnection *connection)
     }
     else
     {
-        // Observer — inform them of their status
+        // Observer  -  inform them of their status
         connection->sendControlStatus();
     }
 }
@@ -209,7 +209,7 @@ void DaemonServer::onGuiInputReceived(quint8 characterId, const QString &text)
         return;
     }
 
-    // sendInput is thread-safe — it's a slot called via queued connection
+    // sendInput is thread-safe  -  it's a slot called via queued connection
     // because CharacterSession lives on a different thread
     QMetaObject::invokeMethod(session, "sendInput",
                               Qt::QueuedConnection,
@@ -283,7 +283,7 @@ void DaemonServer::sendCharacterInfoDump(GuiConnection *connection,
     connection->sendFrame(MSG_CHARACTER_INFO, session->characterId(),
                           infoPayload);
 
-    // BackbufferBegin with 0 lines — backbuffer dump not yet implemented
+    // BackbufferBegin with 0 lines  -  backbuffer dump not yet implemented
     QByteArray bbBegin;
     bbBegin.append(static_cast<char>(0)); // num_lines low
     bbBegin.append(static_cast<char>(0)); // num_lines high

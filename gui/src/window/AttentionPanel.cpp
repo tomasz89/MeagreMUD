@@ -10,7 +10,7 @@ AttentionPanel::AttentionPanel(QWidget *parent)
     outerLayout->setContentsMargins(0, 0, 0, 0);
     outerLayout->setSpacing(0);
 
-    // Toggle button — always visible, acts as the collapsed header
+    // Toggle button  -  always visible, acts as the collapsed header
     m_toggleButton = new QPushButton(this);
     m_toggleButton->setFlat(true);
     m_toggleButton->setStyleSheet(QStringLiteral(
@@ -51,7 +51,7 @@ void AttentionPanel::addEvent(quint8 characterId, quint16 eventId,
     layout->addWidget(descLabel, 1);
 
     auto *dismissBtn = new QPushButton(QStringLiteral("Dismiss"), row);
-    // Capture by value — safe because the button lifetime is tied to the row
+    // Capture by value  -  safe because the button lifetime is tied to the row
     connect(dismissBtn, &QPushButton::clicked, this,
             [this, characterId, eventId]()
             {
@@ -145,16 +145,16 @@ void AttentionPanel::updateBadge()
 {
     if (m_eventCount == 0)
     {
-        m_toggleButton->setText(QStringLiteral("⚠ No issues"));
+        m_toggleButton->setText(QStringLiteral("[!] No issues"));
     }
     else if (m_eventCount == 1)
     {
-        m_toggleButton->setText(QStringLiteral("⚠ 1 issue ▾"));
+        m_toggleButton->setText(QStringLiteral("[!] 1 issue v"));
     }
     else
     {
         m_toggleButton->setText(
-            QStringLiteral("⚠ %1 issues ▾").arg(m_eventCount));
+            QStringLiteral("[!] %1 issues v").arg(m_eventCount));
     }
 }
 

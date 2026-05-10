@@ -18,15 +18,15 @@
  * @brief Manages one character's connection to the MUD server.
  *
  * Each CharacterSession runs on a dedicated QThread, owned by
- * CharacterRegistry. The MUD-side QTcpSocket is created in init() — never
- * in the constructor — to ensure it belongs to the session thread.
+ * CharacterRegistry. The MUD-side QTcpSocket is created in init()  -  never
+ * in the constructor  -  to ensure it belongs to the session thread.
  *
  * @par Lifecycle
  * -# Main thread creates CharacterSession and a QThread.
  * -# CharacterSession is moved to the thread (@c moveToThread).
- * -# @c QThread::started → @c init() via queued connection.
+ * -# @c QThread::started -> @c init() via queued connection.
  * -# @c init() creates the QTcpSocket and AnsiParser on the session thread.
- * -# Normal operation: MUD bytes → AnsiParser → StyledRun → runReady signal.
+ * -# Normal operation: MUD bytes -> AnsiParser -> StyledRun -> runReady signal.
  * -# @c stop() sets a flag and disconnects the MUD socket.
  * -# @c onMudDisconnected() emits @c stopped() when the stop is clean.
  * -# CharacterRegistry calls @c QThread::quit() on receiving @c stopped().
@@ -37,7 +37,7 @@
  * by CharacterRegistry.
  *
  * @warning Never delete a CharacterSession directly. Call stop() and wait
- *          for the stopped() signal, then let QThread::finished →
+ *          for the stopped() signal, then let QThread::finished ->
  *          QObject::deleteLater handle cleanup.
  */
 class CharacterSession : public QObject
@@ -47,7 +47,7 @@ class CharacterSession : public QObject
 public:
     /**
      * @brief Constructs the session. Does not create the MUD socket.
-     * @param characterId   Unique 1-based identifier (1–16).
+     * @param characterId   Unique 1-based identifier (1 - 16).
      * @param characterName Display name for log messages and the GUI.
      * @param parent        Optional Qt parent (normally nullptr; session is
      *                      moved to its own thread).
@@ -99,7 +99,7 @@ public:
     /**
      * @brief Requests a clean shutdown of the session.
      *
-     * Thread-safe — may be called from the main thread. Sets @c m_stopRequested
+     * Thread-safe  -  may be called from the main thread. Sets @c m_stopRequested
      * and disconnects the MUD socket. The session emits stopped() once the
      * socket has closed.
      */
@@ -147,7 +147,7 @@ public slots:
      * @brief Initialises the session on the session thread.
      *
      * Called via queued connection from QThread::started. Creates the
-     * QTcpSocket and AnsiParser here — never in the constructor — so that
+     * QTcpSocket and AnsiParser here  -  never in the constructor  -  so that
      * both objects belong to the session thread.
      */
     void init();
@@ -204,7 +204,7 @@ private:
 
     AnsiParser     *m_ansiParser = nullptr; ///< ANSI parser (created in init()).
 
-    /// MUD-side socket — created in init(), owned by this object's thread.
+    /// MUD-side socket  -  created in init(), owned by this object's thread.
     QTcpSocket     *m_mudSocket = nullptr;
 
     QString         m_mudHost;       ///< MUD server hostname (loaded from DB).

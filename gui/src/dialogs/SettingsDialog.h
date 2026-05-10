@@ -15,7 +15,7 @@
  * @brief Application settings dialog.
  *
  * Single QDialog with five tabs and OK / Cancel / Apply buttons.
- * Tabs 1–5 are stubs pending SQLite-backed implementation.
+ * Tabs 1 - 5 are stubs pending SQLite-backed implementation.
  *
  * ## Tab summary
  * | # | Name | Status | Backend |
@@ -26,7 +26,7 @@
  * | 4 | Triggers & Automation | Stub | SQLite |
  * | 5 | Server Quirks | Stub | SQLite |
  *
- * Tabs 1–5 are stubs pending SQLite-backed implementation.
+ * Tabs 1 - 5 are stubs pending SQLite-backed implementation.
  *
  * ## Usage
  * @code

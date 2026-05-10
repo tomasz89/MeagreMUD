@@ -11,7 +11,7 @@
 #include <QHBoxLayout>
 
 // ---------------------------------------------------------------------------
-// Default ANSI palette — standard dark terminal colours.
+// Default ANSI palette  -  standard dark terminal colours.
 //
 // Indices 0-7:  normal colours
 // Indices 8-15: bright/bold variants
@@ -56,7 +56,7 @@ TerminalWidget::TerminalWidget(int backbufferCapacity, QWidget *parent)
     , m_defaultBg(DEFAULT_BG)
     , m_pendingCr(false)
 {
-    // Allocate buffer — one Line per slot, all empty
+    // Allocate buffer  -  one Line per slot, all empty
     m_buffer.resize(m_capacity);
 
     // Copy default palette
@@ -65,7 +65,7 @@ TerminalWidget::TerminalWidget(int backbufferCapacity, QWidget *parent)
         m_palette[i] = DEFAULT_PALETTE[i];
     }
 
-    // Scrollbar — positioned to the right, managed manually
+    // Scrollbar  -  positioned to the right, managed manually
     m_scrollbar = new QScrollBar(Qt::Vertical, this);
     m_scrollbar->setMinimum(0);
     m_scrollbar->setValue(0);
@@ -288,7 +288,7 @@ void TerminalWidget::wheelEvent(QWheelEvent *event)
 
 void TerminalWidget::keyPressEvent(QKeyEvent *event)
 {
-    // TerminalWidget does not accept keyboard input — InputWidget owns focus.
+    // TerminalWidget does not accept keyboard input  -  InputWidget owns focus.
     // Page Up / Page Down are still handled here for scrollback convenience.
     if (event->key() == Qt::Key_PageUp)
     {
@@ -398,14 +398,14 @@ void TerminalWidget::appendSegmentToOpenLine(const StyledRun &run,
 void TerminalWidget::commitOpenLine()
 {
     // The open line becomes a complete historical line.
-    // Open a new empty line — advancing the head if the buffer is full.
+    // Open a new empty line  -  advancing the head if the buffer is full.
     if (m_lineCount < m_capacity)
     {
         m_lineCount++;
     }
     else
     {
-        // Buffer full — overwrite the oldest line
+        // Buffer full  -  overwrite the oldest line
         m_head = (m_head + 1) % m_capacity;
         // m_lineCount stays at m_capacity
     }
@@ -416,7 +416,7 @@ void TerminalWidget::commitOpenLine()
 
 void TerminalWidget::carriageReturn()
 {
-    // Discard the content of the open line — next text will overwrite from col 0.
+    // Discard the content of the open line  -  next text will overwrite from col 0.
     lineAt(m_lineCount - 1).clear();
     m_pendingCr = false;
 }
