@@ -44,8 +44,7 @@ class ToolbarManager : public QObject
 public:
     /// Stable string identifiers for each toolbar button.
     /// Used for serialisation in DisplaySettings.
-    static constexpr const char *ID_BBS_CONNECT      = "bbs_connect";
-    static constexpr const char *ID_BBS_DISCONNECT    = "bbs_disconnect";
+    static constexpr const char *ID_BBS_CONNECTION    = "bbs_connection";
     static constexpr const char *ID_GOTO_LOCATION     = "goto_location";
     static constexpr const char *ID_RUN_CIRCUIT       = "run_circuit";
     static constexpr const char *ID_CEASE             = "cease";
@@ -79,10 +78,17 @@ public:
     /**
      * @brief Apply the pre-connection toolbar state.
      *
-     * Hides all actions except the daemon connect toggle and its separator.
-     * Called when the GUI-daemon connection is not yet established.
+     * Shows File-menu equivalent actions: Connection dialog, Quick Connect,
+     * and Auto-connect toggle. These are the same QAction instances from
+     * the File menu -- they appear in both places simultaneously.
+     *
+     * @param connectAction       The "Connection..." action from the File menu.
+     * @param quickConnectAction  The "Quick Connect" action from the File menu.
+     * @param autoConnectAction   The "Auto-connect on launch" action from the File menu.
      */
-    void applyPreConnectionState();
+    void applyPreConnectionState(QAction *connectAction,
+                                 QAction *quickConnectAction,
+                                 QAction *autoConnectAction);
 
     /**
      * @brief Apply the post-connection toolbar state.
@@ -102,6 +108,8 @@ public:
      *
      * @param connected  true if the character is connected to the BBS.
      */
+    /// Update the toggle checked state to reflect actual BBS connection status.
+    /// @param connected true if the character is connected to the BBS.
     void setBbsConnected(bool connected);
 
     /**
@@ -114,11 +122,9 @@ public:
     void setAutomationChildrenEnabled(bool enabled);
 
 signals:
-    /// Emitted when the user clicks BBS Connect.
-    void bbsConnectRequested();
-
-    /// Emitted when the user clicks BBS Disconnect.
-    void bbsDisconnectRequested();
+    /// Emitted when the BBS connection toggle changes.
+    /// @param connect true = connect requested, false = disconnect requested.
+    void bbsConnectionToggled(bool connect);
 
     /// Emitted when the user clicks Go To Location.
     void gotoLocationRequested();

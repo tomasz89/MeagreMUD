@@ -12,9 +12,7 @@
 QStringList ToolbarManager::defaultButtonOrder()
 {
     return QStringList()
-        << QString::fromLatin1(ID_BBS_CONNECT)
-        << QString::fromLatin1(ID_BBS_DISCONNECT)
-        << QStringLiteral("separator")
+        << QString::fromLatin1(ID_BBS_CONNECTION)
         << QString::fromLatin1(ID_GOTO_LOCATION)
         << QString::fromLatin1(ID_RUN_CIRCUIT)
         << QString::fromLatin1(ID_CEASE)
@@ -53,21 +51,39 @@ QAction *ToolbarManager::action(const QString &id) const
     return m_actions.value(id, nullptr);
 }
 
-void ToolbarManager::applyPreConnectionState()
+void ToolbarManager::applyPreConnectionState(QAction *connectAction,
+                                                QAction *quickConnectAction,
+                                                QAction *autoConnectAction)
 {
-    // Hide everything except BBS connect/disconnect
     m_toolbar->clear();
 
-    QAction *conn = m_actions.value(QString::fromLatin1(ID_BBS_CONNECT));
-    QAction *disc = m_actions.value(QString::fromLatin1(ID_BBS_DISCONNECT));
-
-    if (conn != nullptr)
+    // Show File-menu equivalents with icons so the toolbar is useful
+    // before the daemon is connected.
+    if (connectAction != nullptr)
     {
-        m_toolbar->addAction(conn);
+        if (connectAction->icon().isNull())
+        {
+            connectAction->setIcon(IconFactory::daemonConnect());
+        }
+        m_toolbar->addAction(connectAction);
     }
-    if (disc != nullptr)
+
+    if (quickConnectAction != nullptr)
     {
-        m_toolbar->addAction(disc);
+        if (quickConnectAction->icon().isNull())
+        {
+            quickConnectAction->setIcon(IconFactory::daemonQuickConnect());
+        }
+        m_toolbar->addAction(quickConnectAction);
+    }
+
+    if (autoConnectAction != nullptr)
+    {
+        if (autoConnectAction->icon().isNull())
+        {
+            autoConnectAction->setIcon(IconFactory::daemonAutoConnect());
+        }
+        m_toolbar->addAction(autoConnectAction);
     }
 }
 
@@ -75,25 +91,28 @@ void ToolbarManager::applyPostConnectionState(const QStringList &buttonOrder)
 {
     m_toolbar->clear();
 
-    // Always start with BBS connect/disconnect on the far left
-    QAction *conn = m_actions.value(QString::fromLatin1(ID_BBS_CONNECT));
-    QAction *disc = m_actions.value(QString::fromLatin1(ID_BBS_DISCONNECT));
-
+    // Always start with BBS connection toggle on the far left
+    QAction *conn = m_actions.value(QString::fromLatin1(ID_BBS_CONNECTION));
     if (conn != nullptr)
     {
         m_toolbar->addAction(conn);
-    }
-    if (disc != nullptr)
-    {
-        m_toolbar->addAction(disc);
     }
 
     // Separator between the connect group and the rest
     m_toolbar->addSeparator();
 
-    // Add remaining buttons per saved order
-    for (const QString &id : buttonOrder)
+    // Add remaining buttons per saved order.
+    // Strip any leading separator -- the hardcoded one above already provides it.
+    int startIndex = 0;
+    while (startIndex < buttonOrder.size()
+           && buttonOrder.at(startIndex) == QStringLiteral("separator"))
     {
+        startIndex++;
+    }
+
+    for (int i = startIndex; i < buttonOrder.size(); ++i)
+    {
+        const QString &id = buttonOrder.at(i);
         if (id == QStringLiteral("separator"))
         {
             m_toolbar->addSeparator();
@@ -101,8 +120,7 @@ void ToolbarManager::applyPostConnectionState(const QStringList &buttonOrder)
         }
 
         // Skip BBS connect/disconnect — already added above
-        if (id == QString::fromLatin1(ID_BBS_CONNECT)
-            || id == QString::fromLatin1(ID_BBS_DISCONNECT))
+        if (id == QString::fromLatin1(ID_BBS_CONNECTION))
         {
             continue;
         }
@@ -117,16 +135,14 @@ void ToolbarManager::applyPostConnectionState(const QStringList &buttonOrder)
 
 void ToolbarManager::setBbsConnected(bool connected)
 {
-    QAction *conn = m_actions.value(QString::fromLatin1(ID_BBS_CONNECT));
-    QAction *disc = m_actions.value(QString::fromLatin1(ID_BBS_DISCONNECT));
-
-    if (conn != nullptr)
+    QAction *a = m_actions.value(QString::fromLatin1(ID_BBS_CONNECTION));
+    if (a != nullptr)
     {
-        conn->setEnabled(!connected);
-    }
-    if (disc != nullptr)
-    {
-        disc->setEnabled(connected);
+        // Block signal so we don't emit bbsConnectionToggled during a
+        // programmatic state update (e.g. daemon reporting connection status)
+        a->blockSignals(true);
+        a->setChecked(connected);
+        a->blockSignals(false);
     }
 }
 
@@ -169,22 +185,16 @@ void ToolbarManager::onChildToggled(bool checked)
 
 void ToolbarManager::createActions()
 {
-    // --- BBS connect / disconnect ---
+    // --- BBS connection toggle ---
     {
-        QAction *a = new QAction(IconFactory::bbsConnect(),
-                                 QStringLiteral("Connect to BBS"), this);
-        a->setToolTip(QStringLiteral("Connect character session to BBS server"));
+        QAction *a = new QAction(IconFactory::bbsConnection(),
+                                 QStringLiteral("BBS Connection"), this);
+        a->setToolTip(QStringLiteral("Toggle character session connection to BBS server"));
+        a->setCheckable(true);
+        a->setChecked(false);
         a->setEnabled(false); // enabled once GUI is connected to daemon
-        connect(a, &QAction::triggered, this, &ToolbarManager::bbsConnectRequested);
-        m_actions.insert(QString::fromLatin1(ID_BBS_CONNECT), a);
-    }
-    {
-        QAction *a = new QAction(IconFactory::bbsDisconnect(),
-                                 QStringLiteral("Disconnect from BBS"), this);
-        a->setToolTip(QStringLiteral("Disconnect character session from BBS server"));
-        a->setEnabled(false);
-        connect(a, &QAction::triggered, this, &ToolbarManager::bbsDisconnectRequested);
-        m_actions.insert(QString::fromLatin1(ID_BBS_DISCONNECT), a);
+        connect(a, &QAction::toggled, this, &ToolbarManager::bbsConnectionToggled);
+        m_actions.insert(QString::fromLatin1(ID_BBS_CONNECTION), a);
     }
 
     // --- Path / navigation ---
@@ -299,6 +309,6 @@ void ToolbarManager::createToolbar()
     m_toolbar->setIconSize(QSize(24, 24));
     m_toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
-    // Start in pre-connection state
-    applyPreConnectionState();
+    // MainWindow calls applyPreConnectionState() with the File menu actions
+    // immediately after construction - nothing to do here.
 }

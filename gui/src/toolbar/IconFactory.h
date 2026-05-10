@@ -21,13 +21,22 @@ class IconFactory
 public:
     IconFactory() = delete;
 
-    // --- Daemon / BBS connection ---
+    // --- Daemon (GUI-to-daemon) connection ---
 
-    /// Green plug icon - connect character session to BBS server.
-    static QIcon bbsConnect();
+    /// Two computers with a link - open connection dialog.
+    static QIcon daemonConnect();
 
-    /// Red plug with X - disconnect character session from BBS server.
-    static QIcon bbsDisconnect();
+    /// Lightning bolt plug - quick connect with last profile.
+    static QIcon daemonQuickConnect();
+
+    /// Clock with arrow - auto-connect on launch toggle.
+    static QIcon daemonAutoConnect();
+
+    // --- BBS (character session) connection ---
+
+    /// Plug icon - toggles character session connection to BBS server.
+    /// Use checked state for connected (green), unchecked for disconnected (grey).
+    static QIcon bbsConnection();
 
     // --- Path / navigation ---
 

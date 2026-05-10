@@ -30,12 +30,75 @@ QIcon IconFactory::fromSvg(const QString &svg)
 }
 
 // ---------------------------------------------------------------------------
-// Daemon / BBS connection
+// Daemon (GUI-to-daemon) connection icons
 // ---------------------------------------------------------------------------
 
-QIcon IconFactory::bbsConnect()
+QIcon IconFactory::daemonConnect()
 {
-    // Green plug pointing right
+    // Two screens connected by a cable
+    return fromSvg(QStringLiteral(R"svg(
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Left monitor -->
+  <rect x="1" y="4" width="8" height="6" rx="1" fill="none" stroke="#3498db" stroke-width="1.2"/>
+  <line x1="5" y1="10" x2="5" y2="12" stroke="#3498db" stroke-width="1.2"/>
+  <line x1="3" y1="12" x2="7" y2="12" stroke="#3498db" stroke-width="1.2"/>
+  <!-- Right monitor -->
+  <rect x="15" y="4" width="8" height="6" rx="1" fill="none" stroke="#3498db" stroke-width="1.2"/>
+  <line x1="19" y1="10" x2="19" y2="12" stroke="#3498db" stroke-width="1.2"/>
+  <line x1="17" y1="12" x2="21" y2="12" stroke="#3498db" stroke-width="1.2"/>
+  <!-- Connecting cable -->
+  <path d="M9 7 L15 7" stroke="#2ecc71" stroke-width="1.5" stroke-dasharray="2,1"/>
+  <!-- Connection dots -->
+  <circle cx="9" cy="7" r="1" fill="#2ecc71"/>
+  <circle cx="15" cy="7" r="1" fill="#2ecc71"/>
+</svg>)svg"));
+}
+
+QIcon IconFactory::daemonQuickConnect()
+{
+    // Lightning bolt inside a plug - quick connect
+    return fromSvg(QStringLiteral(R"svg(
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Plug body -->
+  <rect x="2" y="10" width="9" height="4" rx="1" fill="#3498db" stroke="#2980b9" stroke-width="0.8"/>
+  <!-- Prongs -->
+  <rect x="4" y="7" width="2" height="3" rx="0.5" fill="#2980b9"/>
+  <rect x="8" y="7" width="2" height="3" rx="0.5" fill="#2980b9"/>
+  <!-- Lightning bolt -->
+  <path d="M15 3 L11 13 L15 13 L11 21 L20 9 L16 9 Z"
+        fill="#f39c12" stroke="#e67e22" stroke-width="0.5"/>
+</svg>)svg"));
+}
+
+QIcon IconFactory::daemonAutoConnect()
+{
+    // Clock face with a small arrow suggesting scheduled/automatic action
+    return fromSvg(QStringLiteral(R"svg(
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Clock face -->
+  <circle cx="12" cy="12" r="9" fill="none" stroke="#7f8c8d" stroke-width="1.5"/>
+  <!-- Clock hands -->
+  <line x1="12" y1="12" x2="12" y2="7" stroke="#2c3e50" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="12" y1="12" x2="16" y2="14" stroke="#2c3e50" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Centre dot -->
+  <circle cx="12" cy="12" r="1" fill="#2c3e50"/>
+  <!-- Small refresh arrow in bottom-right suggesting auto -->
+  <path d="M18 17 C19 15.5 19 14 18 13" stroke="#27ae60" stroke-width="1.2"
+        fill="none" stroke-linecap="round"/>
+  <path d="M16.5 17.5 L18 17 L18.5 15.5" stroke="#27ae60" stroke-width="1.2"
+        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>)svg"));
+}
+
+// ---------------------------------------------------------------------------
+// BBS connection
+// ---------------------------------------------------------------------------
+
+QIcon IconFactory::bbsConnection()
+{
+    // Plug icon used as a toggle.
+    // Qt will tint the checked state automatically via the style,
+    // but we provide a single neutral plug that reads clearly both ways.
     return fromSvg(QStringLiteral(R"svg(
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
   <!-- Plug body -->
@@ -49,24 +112,6 @@ QIcon IconFactory::bbsConnect()
   <rect x="16" y="10.5" width="1.5" height="1" rx="0.2" fill="#27ae60"/>
   <rect x="14" y="12.5" width="1.5" height="1" rx="0.2" fill="#27ae60"/>
   <rect x="16" y="12.5" width="1.5" height="1" rx="0.2" fill="#27ae60"/>
-  <!-- Arrow hint -->
-  <path d="M19 12 L22 12 M20.5 10.5 L22 12 L20.5 13.5" stroke="#27ae60" stroke-width="1" fill="none" stroke-linecap="round"/>
-</svg>)svg"));
-}
-
-QIcon IconFactory::bbsDisconnect()
-{
-    // Red plug with X
-    return fromSvg(QStringLiteral(R"svg(
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <!-- Plug body -->
-  <rect x="3" y="10" width="10" height="4" rx="1" fill="#e74c3c" stroke="#c0392b" stroke-width="0.8"/>
-  <!-- Prongs -->
-  <rect x="5" y="7" width="2" height="3" rx="0.5" fill="#c0392b"/>
-  <rect x="9" y="7" width="2" height="3" rx="0.5" fill="#c0392b"/>
-  <!-- X mark -->
-  <line x1="15" y1="9" x2="21" y2="15" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="21" y1="9" x2="15" y2="15" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"));
 }
 

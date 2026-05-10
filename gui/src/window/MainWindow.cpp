@@ -33,6 +33,11 @@ MainWindow::MainWindow(QWidget *parent)
     addToolBar(Qt::TopToolBarArea, m_toolbarManager->toolbar());
     connect(m_toolbarManager, &ToolbarManager::settingsRequested,
             this, &MainWindow::onActionSettings);
+    // Apply initial pre-connection state with File menu actions
+    m_toolbarManager->applyPreConnectionState(
+        m_connectAction,
+        m_quickConnectAction,
+        m_autoConnectAction);
 
     // Wire up connection manager
     connect(&m_connectionManager, &DaemonConnectionManager::stateChanged,
@@ -237,9 +242,12 @@ void MainWindow::scheduleRetry(const QString &profile)
 {
     m_retryProfile = profile;
     m_retryTimer.start(RETRY_INTERVAL_MS);
+    // Show with timeout slightly longer than retry interval so it stays
+    // visible until either the next retry fires or connection succeeds
     statusBar()->showMessage(
         QStringLiteral("[MeagreMUD] Connection failed - retrying in %1s...")
-            .arg(RETRY_INTERVAL_MS / 1000));
+            .arg(RETRY_INTERVAL_MS / 1000),
+        RETRY_INTERVAL_MS + 1000);
 }
 
 void MainWindow::cancelRetry()
@@ -306,7 +314,10 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
             lockAllPanes(true);
             if (m_toolbarManager != nullptr)
             {
-                m_toolbarManager->applyPreConnectionState();
+                m_toolbarManager->applyPreConnectionState(
+                    m_connectAction,
+                    m_quickConnectAction,
+                    m_autoConnectAction);
             }
 
             // Schedule retry if auto-connect is on and disconnect wasn't user-initiated
@@ -326,6 +337,7 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
 
         case DaemonConnectionManager::State::Connecting:
             lockAllPanes(true);
+            statusBar()->clearMessage();
             break;
 
         case DaemonConnectionManager::State::Syncing:
@@ -334,7 +346,10 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
 
             if (m_toolbarManager != nullptr)
             {
-                m_toolbarManager->applyPreConnectionState();
+                m_toolbarManager->applyPreConnectionState(
+                    m_connectAction,
+                    m_quickConnectAction,
+                    m_autoConnectAction);
             }
 
             if (m_connectionManager.resyncCount() > 0)
@@ -349,6 +364,11 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
         case DaemonConnectionManager::State::Connected:
             // Unlock inputs  -  observer mode governed separately by hasControl
             lockAllPanes(false);
+
+            // Clear any transient status bar messages (e.g. "Retrying...")
+            // so the permanent status label is visible again
+            cancelRetry();
+            statusBar()->clearMessage();
 
             if (m_toolbarManager != nullptr)
             {
