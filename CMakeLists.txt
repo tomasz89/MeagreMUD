@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network Sql Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Network Sql Svg Widgets)
 qt_standard_project_setup()
 
 add_subdirectory(meagrelib)

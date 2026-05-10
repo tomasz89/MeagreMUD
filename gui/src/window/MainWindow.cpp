@@ -11,6 +11,7 @@
 #include <QDebug>
 
 #include "dialogs/ConnectionDialog.h"
+#include "toolbar/ToolbarManager.h"
 
 // ---------------------------------------------------------------------------
 // Construction
@@ -26,6 +27,12 @@ MainWindow::MainWindow(QWidget *parent)
     setupMenuBar();
     setupCentralWidget();
     setupStatusBar();
+
+    // Toolbar
+    m_toolbarManager = new ToolbarManager(this, this);
+    addToolBar(Qt::TopToolBarArea, m_toolbarManager->toolbar());
+    connect(m_toolbarManager, &ToolbarManager::settingsRequested,
+            this, &MainWindow::onActionSettings);
 
     // Wire up connection manager
     connect(&m_connectionManager, &DaemonConnectionManager::stateChanged,
@@ -297,6 +304,10 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
         case DaemonConnectionManager::State::Disconnected:
             // Dim all panes but preserve their content
             lockAllPanes(true);
+            if (m_toolbarManager != nullptr)
+            {
+                m_toolbarManager->applyPreConnectionState();
+            }
 
             // Schedule retry if auto-connect is on and disconnect wasn't user-initiated
             if (loadAutoConnect() && !m_userDisconnected)
@@ -321,6 +332,11 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
             // Lock inputs until ResyncAck  -  panes dimmed, only Disconnect available
             lockAllPanes(true);
 
+            if (m_toolbarManager != nullptr)
+            {
+                m_toolbarManager->applyPreConnectionState();
+            }
+
             if (m_connectionManager.resyncCount() > 0)
             {
                 const QString msg = QStringLiteral("[MeagreMUD] Protocol resync #%1")
@@ -333,6 +349,15 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
         case DaemonConnectionManager::State::Connected:
             // Unlock inputs  -  observer mode governed separately by hasControl
             lockAllPanes(false);
+
+            if (m_toolbarManager != nullptr)
+            {
+                m_toolbarManager->applyPostConnectionState(
+                    ToolbarManager::defaultButtonOrder());
+                QAction *sa = m_toolbarManager->action(
+                    QString::fromLatin1(ToolbarManager::ID_SETTINGS));
+                if (sa != nullptr) { sa->setEnabled(true); }
+            }
             break;
     }
 }

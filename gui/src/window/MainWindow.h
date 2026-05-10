@@ -14,6 +14,7 @@
 #include "window/TiledArea.h"
 #include "pane/CharacterPane.h"
 #include "dialogs/SettingsDialog.h"
+#include "toolbar/ToolbarManager.h"
 
 /**
  * @brief Top-level application window.
@@ -205,6 +206,7 @@ private:
     QAction *m_settingsAction     = nullptr; ///< Enabled only when Connected.
 
     DaemonConnectionManager m_connectionManager; ///< Owns the daemon TCP socket.
+    ToolbarManager         *m_toolbarManager = nullptr; ///< Manages the main toolbar.
 
     // Auto-connect retry
     QTimer  m_retryTimer;               ///< Fires after backoff to attempt reconnect.

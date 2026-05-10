@@ -18,6 +18,10 @@ qt_add_executable(meagre-gui
     src/input/InputWidget.cpp
     src/dialogs/SettingsDialog.h
     src/dialogs/SettingsDialog.cpp
+    src/toolbar/IconFactory.h
+    src/toolbar/IconFactory.cpp
+    src/toolbar/ToolbarManager.h
+    src/toolbar/ToolbarManager.cpp
     src/dialogs/ConnectionDialog.h
     src/dialogs/ConnectionDialog.cpp
 )
@@ -27,6 +31,8 @@ target_link_libraries(meagre-gui
         meagrelib
         Qt6::Core
         Qt6::Network
+        Qt6::Svg
+        Qt6::Svg
         Qt6::Widgets
 )
 
