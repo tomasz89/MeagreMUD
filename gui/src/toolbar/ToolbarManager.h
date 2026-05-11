@@ -88,7 +88,8 @@ public:
      */
     void applyPreConnectionState(QAction *connectAction,
                                  QAction *quickConnectAction,
-                                 QAction *autoConnectAction);
+                                 QAction *autoConnectAction,
+                                 QAction *disconnectAction);
 
     /**
      * @brief Apply the post-connection toolbar state.

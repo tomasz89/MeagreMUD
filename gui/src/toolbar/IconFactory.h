@@ -32,6 +32,9 @@ public:
     /// Clock with arrow - auto-connect on launch toggle.
     static QIcon daemonAutoConnect();
 
+    /// Two screens with broken link - disconnect from daemon.
+    static QIcon daemonDisconnect();
+
     // --- BBS (character session) connection ---
 
     /// Plug icon - toggles character session connection to BBS server.

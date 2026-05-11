@@ -90,6 +90,27 @@ QIcon IconFactory::daemonAutoConnect()
 </svg>)svg"));
 }
 
+QIcon IconFactory::daemonDisconnect()
+{
+    // Two screens with a broken/red link
+    return fromSvg(QStringLiteral(R"svg(
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Left monitor -->
+  <rect x="1" y="4" width="8" height="6" rx="1" fill="none" stroke="#7f8c8d" stroke-width="1.2"/>
+  <line x1="5" y1="10" x2="5" y2="12" stroke="#7f8c8d" stroke-width="1.2"/>
+  <line x1="3" y1="12" x2="7" y2="12" stroke="#7f8c8d" stroke-width="1.2"/>
+  <!-- Right monitor -->
+  <rect x="15" y="4" width="8" height="6" rx="1" fill="none" stroke="#7f8c8d" stroke-width="1.2"/>
+  <line x1="19" y1="10" x2="19" y2="12" stroke="#7f8c8d" stroke-width="1.2"/>
+  <line x1="17" y1="12" x2="21" y2="12" stroke="#7f8c8d" stroke-width="1.2"/>
+  <!-- Broken cable with X -->
+  <line x1="9" y1="7" x2="11" y2="7" stroke="#e74c3c" stroke-width="1.2"/>
+  <line x1="13" y1="7" x2="15" y2="7" stroke="#e74c3c" stroke-width="1.2"/>
+  <line x1="11" y1="5.5" x2="13" y2="8.5" stroke="#e74c3c" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="13" y1="5.5" x2="11" y2="8.5" stroke="#e74c3c" stroke-width="1.5" stroke-linecap="round"/>
+</svg>)svg"));
+}
+
 // ---------------------------------------------------------------------------
 // BBS connection
 // ---------------------------------------------------------------------------

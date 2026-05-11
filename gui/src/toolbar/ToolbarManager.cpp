@@ -53,7 +53,8 @@ QAction *ToolbarManager::action(const QString &id) const
 
 void ToolbarManager::applyPreConnectionState(QAction *connectAction,
                                                 QAction *quickConnectAction,
-                                                QAction *autoConnectAction)
+                                                QAction *autoConnectAction,
+                                                QAction *disconnectAction)
 {
     m_toolbar->clear();
 
@@ -84,6 +85,17 @@ void ToolbarManager::applyPreConnectionState(QAction *connectAction,
             autoConnectAction->setIcon(IconFactory::daemonAutoConnect());
         }
         m_toolbar->addAction(autoConnectAction);
+    }
+
+    // Disconnect always available -- cancels retry and cleans up
+    if (disconnectAction != nullptr)
+    {
+        if (disconnectAction->icon().isNull())
+        {
+            disconnectAction->setIcon(IconFactory::daemonDisconnect());
+        }
+        m_toolbar->addSeparator();
+        m_toolbar->addAction(disconnectAction);
     }
 }
 

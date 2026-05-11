@@ -37,7 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_toolbarManager->applyPreConnectionState(
         m_connectAction,
         m_quickConnectAction,
-        m_autoConnectAction);
+        m_autoConnectAction,
+        m_disconnectAction);
 
     // Wire up connection manager
     connect(&m_connectionManager, &DaemonConnectionManager::stateChanged,
@@ -335,7 +336,8 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
                 m_toolbarManager->applyPreConnectionState(
                     m_connectAction,
                     m_quickConnectAction,
-                    m_autoConnectAction);
+                    m_autoConnectAction,
+                    m_disconnectAction);
             }
 
             // Schedule retry if auto-connect is on and disconnect wasn't user-initiated
@@ -367,7 +369,8 @@ void MainWindow::onConnectionStateChanged(DaemonConnectionManager::State newStat
                 m_toolbarManager->applyPreConnectionState(
                     m_connectAction,
                     m_quickConnectAction,
-                    m_autoConnectAction);
+                    m_autoConnectAction,
+                    m_disconnectAction);
             }
 
             if (m_connectionManager.resyncCount() > 0)
@@ -681,7 +684,7 @@ void MainWindow::updateConnectionUi(DaemonConnectionManager::State state)
         case DaemonConnectionManager::State::Disconnected:
             m_statusLabel->setText(QStringLiteral("Disconnected"));
             m_connectAction->setEnabled(true);
-            m_disconnectAction->setEnabled(false);
+            m_disconnectAction->setEnabled(true);
             m_pathEditorAction->setEnabled(false);
             m_settingsAction->setEnabled(false);
             break;
