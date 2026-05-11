@@ -62,10 +62,26 @@ MainWindow::MainWindow(QWidget *parent)
             statusBar()->showMessage(
                 QStringLiteral("[MeagreMUD] Retrying connection to %1...")
                     .arg(m_retryProfile));
+            m_countdownTimer.stop();
             onConnectRequested(m_retryProfile);
         }
     });
 
+
+    // Wire countdown timer  -  ticks every second to update the status bar
+    m_countdownTimer.setInterval(1000);
+    m_countdownTimer.setSingleShot(false);
+    connect(&m_countdownTimer, &QTimer::timeout, this, [this]()
+    {
+        m_countdownSeconds--;
+        if (m_countdownSeconds > 0)
+        {
+            statusBar()->showMessage(
+                QStringLiteral("[MeagreMUD] Connection failed - retrying in %1s...")
+                    .arg(m_countdownSeconds),
+                1500);
+        }
+    });
     // Auto-connect if enabled and a last profile exists
     if (loadAutoConnect())
     {
@@ -241,19 +257,21 @@ void MainWindow::onAutoConnectToggled(bool enabled)
 void MainWindow::scheduleRetry(const QString &profile)
 {
     m_retryProfile = profile;
+    m_countdownSeconds = RETRY_INTERVAL_MS / 1000;
     m_retryTimer.start(RETRY_INTERVAL_MS);
-    // Show with timeout slightly longer than retry interval so it stays
-    // visible until either the next retry fires or connection succeeds
+    m_countdownTimer.start();
     statusBar()->showMessage(
         QStringLiteral("[MeagreMUD] Connection failed - retrying in %1s...")
-            .arg(RETRY_INTERVAL_MS / 1000),
-        RETRY_INTERVAL_MS + 1000);
+            .arg(m_countdownSeconds),
+        1500);
 }
 
 void MainWindow::cancelRetry()
 {
     m_retryProfile.clear();
     m_retryTimer.stop();
+    m_countdownTimer.stop();
+    m_countdownSeconds = 0;
 }
 
 bool MainWindow::loadAutoConnect() const

@@ -210,6 +210,8 @@ private:
 
     // Auto-connect retry
     QTimer  m_retryTimer;               ///< Fires after backoff to attempt reconnect.
+    QTimer  m_countdownTimer;           ///< Fires every second to update the countdown display.
+    int     m_countdownSeconds = 0;     ///< Seconds remaining until next retry attempt.
     QString m_retryProfile;             ///< Profile to retry; empty = no retry pending.
     bool    m_userDisconnected = false; ///< Set when user explicitly disconnects; suppresses retry.
 
