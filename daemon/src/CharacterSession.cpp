@@ -78,6 +78,21 @@ void CharacterSession::init()
     connect(m_ansiParser, &AnsiParser::screenCleared,
             this, &CharacterSession::onScreenCleared);
 
+    // AnsiStripper  -  strips style, buffers to newline for trigger granularity
+    m_ansiStripper = new AnsiStripper(this);
+
+    connect(m_ansiParser, &AnsiParser::runReady,
+            m_ansiStripper, &AnsiStripper::onRunReady);
+
+    // SessionLogger  -  appends plain-text output to log file
+    m_sessionLogger = new SessionLogger(this);
+
+    connect(m_ansiStripper, &AnsiStripper::strippedText,
+            m_sessionLogger, &SessionLogger::onStrippedText);
+
+    // TODO: configure log path from database once DatabaseManager
+    // is accessible from CharacterSession.
+
     qDebug() << "CharacterSession::init() character" << m_characterId
              << m_characterName << "on thread"
              << QThread::currentThread();
@@ -128,6 +143,10 @@ void CharacterSession::onMudDisconnected()
     if (m_stopRequested)
     {
         setStatus(CharacterStatus::Disconnected);
+        if (m_sessionLogger != nullptr)
+        {
+            m_sessionLogger->stop();
+        }
         emit stopped(m_characterId);
         return;
     }
@@ -135,6 +154,14 @@ void CharacterSession::onMudDisconnected()
     if (m_ansiParser != nullptr)
     {
         m_ansiParser->reset();
+    }
+    if (m_ansiStripper != nullptr)
+    {
+        m_ansiStripper->reset();
+    }
+    if (m_ansiStripper != nullptr)
+    {
+        m_ansiStripper->flush();
     }
 
     if (!m_autoReconnect)

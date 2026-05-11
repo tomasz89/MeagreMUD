@@ -8,6 +8,8 @@
 #include "protocol/Protocol.h"
 #include "types/MudTypes.h"
 #include "AnsiParser.h"
+#include "AnsiStripper.h"
+#include "SessionLogger.h"
 
 /**
  * @file CharacterSession.h
@@ -202,7 +204,9 @@ private:
     QString         m_characterName; ///< Display name.
     CharacterStatus m_status = CharacterStatus::Disconnected; ///< Current status.
 
-    AnsiParser     *m_ansiParser = nullptr; ///< ANSI parser (created in init()).
+    AnsiParser     *m_ansiParser   = nullptr; ///< ANSI parser (created in init()).
+    AnsiStripper   *m_ansiStripper  = nullptr; ///< Strips style for trigger/log consumers.
+    SessionLogger  *m_sessionLogger = nullptr; ///< Appends plain-text output to log file.
 
     /// MUD-side socket  -  created in init(), owned by this object's thread.
     QTcpSocket     *m_mudSocket = nullptr;

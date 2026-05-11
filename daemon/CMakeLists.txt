@@ -10,6 +10,10 @@ qt_add_executable(meagre-daemon
     src/CharacterRegistry.cpp
     src/AnsiParser.h
     src/AnsiParser.cpp
+    src/AnsiStripper.h
+    src/AnsiStripper.cpp
+    src/SessionLogger.h
+    src/SessionLogger.cpp
 )
 
 target_link_libraries(meagre-daemon
