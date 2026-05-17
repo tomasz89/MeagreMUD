@@ -5,7 +5,6 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QVariant>
-#include <QDir>
 #include <QDebug>
 
 // ---------------------------------------------------------------------------
@@ -124,26 +123,18 @@ NativeDbImporter::NativeDbImporter(DatabaseManager &db, int serverId,
 // ---------------------------------------------------------------------------
 
 NativeDbImporter::ImportResult NativeDbImporter::import(
-    const QString &sourceDir, const QString &callLetters)
+    const FilePaths &paths)
 {
     ImportResult result;
-
-    const QString cc = callLetters;
-    const QString roomFile    = QDir(sourceDir).filePath(
-        QStringLiteral("w%1mp002.dat").arg(cc));
-    const QString monsterFile = QDir(sourceDir).filePath(
-        QStringLiteral("w%1knms2.dat").arg(cc));
-    const QString itemFile    = QDir(sourceDir).filePath(
-        QStringLiteral("w%1knit2.dat").arg(cc));
 
     QSqlDatabase db = m_db.mainDb();
     db.transaction();
 
     clearSeededTables();
 
-    importItems(itemFile, result);
-    importMonsters(monsterFile, result);
-    importRooms(roomFile, result);
+    importItems(paths.itemFile, result);
+    importMonsters(paths.monsterFile, result);
+    importRooms(paths.roomFile, result);
 
     db.commit();
 

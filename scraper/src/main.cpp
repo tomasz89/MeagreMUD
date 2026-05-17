@@ -1,7 +1,6 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QDebug>
-#include <QDir>
 #include <QFileInfo>
 
 #include "db/DatabaseManager.h"
@@ -23,19 +22,20 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription(
         QStringLiteral(
             "meagre-scrape -- MajorMUD world knowledge importer\n\n"
-            "Usage: meagre-scrape import --db <seed.db> --server-id <id>"
-            " [--call-letters <cc>] [--seed-version <ver>] <source_dir>"));
+            "Imports MajorMUD Btrieve .dat/.vir files into seed.db.\n"
+            "File paths are supplied explicitly to avoid filename guessing.\n\n"
+            "Example (NMR _dats directory):\n"
+            "  meagre-scrape import \\\n"
+            "    --db seed.db \\\n"
+            "    --rooms  wccmp002.vir \\\n"
+            "    --monsters wccknms2.vir \\\n"
+            "    --items  wccitem2.vir"));
     parser.addHelpOption();
     parser.addVersionOption();
 
-    // Subcommand positional argument
     parser.addPositionalArgument(
         QStringLiteral("command"),
         QStringLiteral("Command to run. Currently: import"));
-
-    parser.addPositionalArgument(
-        QStringLiteral("source_dir"),
-        QStringLiteral("Directory containing MajorMUD .dat files"));
 
     QCommandLineOption dbOption(
         QStringList() << QStringLiteral("d") << QStringLiteral("db"),
@@ -51,60 +51,100 @@ int main(int argc, char *argv[])
         QStringLiteral("1"));
     parser.addOption(serverIdOption);
 
-    QCommandLineOption callLettersOption(
-        QStringList() << QStringLiteral("c") << QStringLiteral("call-letters"),
-        QStringLiteral("BBS call-letter prefix for .dat file names (default: 00)."),
-        QStringLiteral("cc"),
-        QStringLiteral("00"));
-    parser.addOption(callLettersOption);
+    QCommandLineOption roomsOption(
+        QStringList() << QStringLiteral("r") << QStringLiteral("rooms"),
+        QStringLiteral("Path to the room data file (e.g. wccmp002.vir)."),
+        QStringLiteral("file"));
+    parser.addOption(roomsOption);
+
+    QCommandLineOption monstersOption(
+        QStringList() << QStringLiteral("m") << QStringLiteral("monsters"),
+        QStringLiteral("Path to the monster data file (e.g. wccknms2.vir)."),
+        QStringLiteral("file"));
+    parser.addOption(monstersOption);
+
+    QCommandLineOption itemsOption(
+        QStringList() << QStringLiteral("i") << QStringLiteral("items"),
+        QStringLiteral("Path to the item data file (e.g. wccitem2.vir)."),
+        QStringLiteral("file"));
+    parser.addOption(itemsOption);
 
     QCommandLineOption seedVersionOption(
-        QStringList() << QStringLiteral("v") << QStringLiteral("seed-version"),
+        QStringList() << QStringLiteral("seed-version"),
         QStringLiteral("Seed version string written to SeedMeta (default: 1.0.0)."),
         QStringLiteral("version"),
         QStringLiteral("1.0.0"));
     parser.addOption(seedVersionOption);
 
-    QCommandLineOption sourceVersionOption(
-        QStringList() << QStringLiteral("m") << QStringLiteral("mud-version"),
+    QCommandLineOption mudVersionOption(
+        QStringList() << QStringLiteral("mud-version"),
         QStringLiteral("MajorMUD version string for SeedMeta (default: 1.11p)."),
         QStringLiteral("version"),
         QStringLiteral("1.11p"));
-    parser.addOption(sourceVersionOption);
+    parser.addOption(mudVersionOption);
 
     parser.process(app);
 
     const QStringList positional = parser.positionalArguments();
-    if (positional.size() < 2)
+    if (positional.isEmpty())
     {
         parser.showHelp(1);
         return 1;
     }
 
-    const QString command    = positional.at(0);
-    const QString sourceDir  = positional.at(1);
-    const QString dbPath     = parser.value(dbOption);
-    const int     serverId   = parser.value(serverIdOption).toInt();
-    const QString callLetters = parser.value(callLettersOption);
-    const QString seedVersion = parser.value(seedVersionOption);
-    const QString mudVersion  = parser.value(sourceVersionOption);
-
+    const QString command = positional.at(0);
     if (command != QStringLiteral("import"))
     {
-        qCritical() << "Unknown command:" << command;
-        parser.showHelp(1);
+        qCritical() << "Unknown command:" << command
+                    << "(currently only 'import' is supported)";
         return 1;
     }
 
-    if (!QDir(sourceDir).exists())
+    const QString dbPath      = parser.value(dbOption);
+    const int     serverId    = parser.value(serverIdOption).toInt();
+    const QString seedVersion = parser.value(seedVersionOption);
+    const QString mudVersion  = parser.value(mudVersionOption);
+
+    NativeDbImporter::FilePaths paths;
+    paths.roomFile     = parser.value(roomsOption);
+    paths.monsterFile  = parser.value(monstersOption);
+    paths.itemFile     = parser.value(itemsOption);
+
+    if (paths.roomFile.isEmpty()
+        && paths.monsterFile.isEmpty()
+        && paths.itemFile.isEmpty())
     {
-        qCritical() << "Source directory does not exist:" << sourceDir;
+        qCritical() << "No input files specified."
+                    << "Use --rooms, --monsters, and/or --items.";
+        parser.showHelp(1);
         return 1;
     }
 
     if (serverId <= 0)
     {
-        qCritical() << "Invalid server-id:" << serverId;
+        qCritical() << "Invalid --server-id:" << serverId;
+        return 1;
+    }
+
+    // Warn about any specified files that don't exist
+    auto checkFile = [](const QString &path, const QString &name) -> bool
+    {
+        if (path.isEmpty())
+        {
+            return true; // not specified -- skipped, not an error
+        }
+        if (!QFileInfo::exists(path))
+        {
+            qCritical() << name << "file not found:" << path;
+            return false;
+        }
+        return true;
+    };
+
+    if (!checkFile(paths.roomFile,    QStringLiteral("Room"))
+     || !checkFile(paths.monsterFile, QStringLiteral("Monster"))
+     || !checkFile(paths.itemFile,    QStringLiteral("Item")))
+    {
         return 1;
     }
 
@@ -125,20 +165,43 @@ int main(int argc, char *argv[])
     // Import
     // -----------------------------------------------------------------------
 
-    qInfo() << "meagre-scrape: importing from" << sourceDir
-            << "call-letters=" << callLetters
-            << "server-id=" << serverId;
+    qInfo() << "meagre-scrape: starting import";
+    if (!paths.roomFile.isEmpty())
+    {
+        qInfo() << "  rooms:    " << paths.roomFile;
+    }
+    if (!paths.monsterFile.isEmpty())
+    {
+        qInfo() << "  monsters: " << paths.monsterFile;
+    }
+    if (!paths.itemFile.isEmpty())
+    {
+        qInfo() << "  items:    " << paths.itemFile;
+    }
 
     NativeDbImporter importer(db, serverId);
 
     QObject::connect(&importer, &NativeDbImporter::progress,
                      [](const QString &stage, int current, int total)
                      {
-                         qInfo() << stage << current << "/" << total;
+                         if (current % 500 == 0 || current == total)
+                         {
+                             qInfo().noquote()
+                                 << QString(QStringLiteral("  %1: %2 / %3"))
+                                        .arg(stage, -10)
+                                        .arg(current)
+                                        .arg(total);
+                         }
                      });
 
-    const NativeDbImporter::ImportResult result =
-        importer.import(sourceDir, callLetters);
+    const NativeDbImporter::ImportResult result = importer.import(paths);
+
+    qInfo() << "\nImport summary:";
+    qInfo() << "  Rooms:    " << result.roomsImported;
+    qInfo() << "  Monsters: " << result.monstersImported;
+    qInfo() << "  Items:    " << result.itemsImported;
+    qInfo() << "  Exits:    " << result.exitsImported;
+    qInfo() << "  Spawns:   " << result.spawnRecordsImported;
 
     if (!result.warnings.isEmpty())
     {
@@ -148,13 +211,6 @@ int main(int argc, char *argv[])
             qWarning() << " " << w;
         }
     }
-
-    qInfo() << "Import summary:";
-    qInfo() << "  Rooms:    " << result.roomsImported;
-    qInfo() << "  Monsters: " << result.monstersImported;
-    qInfo() << "  Items:    " << result.itemsImported;
-    qInfo() << "  Exits:    " << result.exitsImported;
-    qInfo() << "  Spawns:   " << result.spawnRecordsImported;
 
     // -----------------------------------------------------------------------
     // Finalise
@@ -167,6 +223,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    qInfo() << "meagre-scrape: done. seed.db written to" << dbPath;
+    qInfo() << "\nmeagre-scrape: done. seed.db written to" << dbPath;
     return 0;
 }
