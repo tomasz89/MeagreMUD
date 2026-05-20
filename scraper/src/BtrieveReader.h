@@ -1,46 +1,47 @@
-#pragma once
-
 /**
  * @file BtrieveReader.h
- * @brief Raw Btrieve 6.x fixed-format .dat file walker.
+ * @brief Hardened, portable, multi-segment Btrieve 6.x file walker.
  *
- * No WBTRV32.DLL required. Reads the binary file directly.
- */
+ * Supports files containing concatenated Btrieve segments starting with "FC" signature.
+ */  
+#pragma once  
 
 #include <QFile>
 #include <QByteArray>
-#include <QString>
+#include <QString>  
+#include <QDebug>
 
 /**
- * @brief Walks a Btrieve 6.x fixed-format .dat file record by record.
- *
- * Btrieve 6.x on-disk layout:
- * - File header at byte 0 (512 bytes): contains record length, page size,
- *   record count.
- * - Data pages follow at page_size boundaries.
- * - Each data page has a 6-byte page header.
- * - Within each page, records are packed contiguously. Each record is
- *   preceded by a 1-byte usage flag: 0x00 = record in use, other = deleted.
- *
- * Usage:
- * @code
- * BtrieveReader reader("/path/to/w00mp002.dat");
- * if (!reader.open()) { ... }
- * qDebug() << "Record length:" << reader.recordLength();
- * QByteArray rec;
- * while (!(rec = reader.nextRecord()).isNull()) {
- *     // process rec
- * }
- * @endcode
- */
+* @brief Walks a Btrieve 6.x fixed-format .dat file record by record.
+*
+* Supports concatenated segments. Each segment starts with an 'FC' signature.
+*
+* Usage:
+* @code
+* BtrieveReader reader("/path/to/w00mp002.dat", BtrieveReader::ByteOrder::BigEndian);
+* if (!reader.open()) { ... }
+* QByteArray rec;
+* while (!(rec = reader.nextRecord()).isEmpty()) {
+*     // process rec
+* }
+* @endcode
+*/
 class BtrieveReader
 {
 public:
-    explicit BtrieveReader(const QString &path);
-    ~BtrieveReader();
+    /**
+     * @brief Endianness configuration for portable parsing.
+     */
+    enum class ByteOrder {
+        LittleEndian,
+        BigEndian
+    };
+
+    explicit BtrieveReader(const QString &path, ByteOrder order = ByteOrder::LittleEndian);
+    ~BtrieveReader();  
 
     /**
-     * @brief Open the file and read the header.
+     * @brief Open the file and read the first header.
      * @return true if the file was opened and the header parsed successfully.
      */
     bool open();
@@ -48,14 +49,17 @@ public:
     /// Close the file.
     void close();
 
+    /// @return Rewind to the first data page of the current segment.
+    void rewind();
+
     /// @return The fixed record length in bytes (from file header).
     int recordLength() const { return m_recordLength; }
 
     /// @return The page size in bytes (from file header).
     int pageSize() const { return m_pageSize; }
 
-    /// @return Number of records reported in the file header.
-    int recordCount() const { return m_recordCount; }
+    /// @return Total number of records across all segments found so far.
+    quint64 recordCount() const { return m_recordCount; }
 
     /// @return The file path this reader was constructed with.
     QString path() const { return m_path; }
@@ -63,39 +67,46 @@ public:
     /**
      * @brief Return the next live record.
      *
+     * Automatically jumps to the next Btrieve segment if the current one ends.
      * Skips deleted records (usage flag != 0x00).
      *
      * @return Raw record bytes (length == recordLength()), or a null
-     *         QByteArray when there are no more records.
+     *         QByteArray when no more segments exist.
      */
     QByteArray nextRecord();
 
-    /// Rewind to the first data page.
-    void rewind();
+    /**
+     * @brief Moves the reader to the next 'FC' signature segment in the file.
+     * @return true if a new segment was found and initialized.
+     */
+    bool moveToNextSegment();
 
-    // --- Inline read helpers (little-endian) ---
+    // --- Portable Assembly Helpers (Public for Importer access) ---
 
-    /// Read a 1-byte unsigned integer from a record at the given offset.
-    static quint8 rb1(const QByteArray &rec, int offset);
+    /**
+     * @brief Read a 1-byte unsigned integer from a record at the given offset.
+     */
+    static quint8  assemble8(const QByteArray &rec, int offset, ByteOrder order = ByteOrder::LittleEndian);
 
-    /// Read a 2-byte little-endian unsigned integer from a record.
-    static quint16 rb2(const QByteArray &rec, int offset);
+    /**
+     * @brief Read a 2-byte integer from a record at the given offset.
+     */
+    static quint16 assemble16(const QByteArray &rec, int offset, ByteOrder order);
 
-    /// Read a 4-byte little-endian unsigned integer from a record.
-    static quint32 rb4(const QByteArray &rec, int offset);
+    /**
+     * @brief Read a 4-byte integer from a record at the given offset.
+     */
+    static quint32 assemble32(const QByteArray &rec, int offset, ByteOrder order);
 
     /**
      * @brief Read a fixed-length null-padded string from a record.
-     *
-     * Reads @p length bytes starting at @p offset, strips null bytes and
-     * trailing whitespace.
      *
      * @param rec     Raw record bytes.
      * @param offset  Byte offset within the record.
      * @param length  Number of bytes to read.
      * @return        Trimmed QString (Latin-1 encoding assumed).
      */
-    static QString rbStr(const QByteArray &rec, int offset, int length);
+    static QString assembleStr(const QByteArray &rec, int offset, int length);
 
 private:
     bool readHeader();
@@ -103,16 +114,18 @@ private:
 
     QString  m_path;
     QFile    m_file;
+    ByteOrder m_order;
 
     int      m_recordLength = 0;
-    int      m_pageSize     = 0;
-    int      m_recordCount  = 0;
+    int      m_pageSize = 0;
+    quint64  m_recordCount = 0;  
 
     // Page-walking state
-    qint64   m_currentPageOffset  = 0;  ///< Byte offset of the current data page
-    int      m_slotInPage         = 0;  ///< Current record slot within the page
-    int      m_slotsPerPage       = 0;  ///< Number of record slots per page
+    qint64   m_currentPageOffset = 0;  ///< Byte offset of the current data page
+    int      m_slotInPage = 0;         ///< Current record slot within the page  
+    int      m_slotsPerPage = 0;       ///< Number of record slots per page  
 
-    static constexpr int HEADER_SIZE    = 512;
+    static constexpr int HEADER_SIZE = 512;
     static constexpr int PAGE_HEADER_SIZE = 6;
+    static constexpr qint64 MAX_FILE_SIZE = 4ULL * 1024 * 1024 * 1024; // 4GB safety cap
 };
