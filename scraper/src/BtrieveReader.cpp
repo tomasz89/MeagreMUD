@@ -1,282 +1,275 @@
 #include "BtrieveReader.h"
-#include <algorithm>
 
-BtrieveReader::BtrieveReader(const QString &path, ByteOrder order) 
-    : m_path(path), m_order(order) 
+#include <QDebug>
+
+// ---------------------------------------------------------------------------
+// Construction / destruction
+// ---------------------------------------------------------------------------
+
+BtrieveReader::BtrieveReader(const QString &path)
+    : m_path(path)
 {
 }
 
-BtrieveReader::~BtrieveReader() 
+BtrieveReader::~BtrieveReader()
 {
     close();
 }
 
-void BtrieveReader::close() 
+// ---------------------------------------------------------------------------
+// Open / close
+// ---------------------------------------------------------------------------
+
+bool BtrieveReader::open()
 {
-    if (m_file.isOpen()) 
+    m_file.setFileName(m_path);
+    if (!m_file.open(QIODevice::ReadOnly))
+    {
+        qWarning() << "BtrieveReader: cannot open" << m_path
+                   << m_file.errorString();
+        return false;
+    }
+
+    if (!readFcr())
+    {
+        m_file.close();
+        return false;
+    }
+
+    classifyPages();
+
+    m_dataPageIndex = 0;
+    m_slotInPage    = DATA_PAGE_HEADER_SIZE;
+
+    qDebug() << "BtrieveReader:" << m_path
+             << "pageSize="             << m_pageSize
+             << "recordLength="         << m_recordLength
+             << "physicalRecordLength=" << m_physicalRecordLength
+             << "recordCount="          << m_recordCount
+             << "dataPages="            << m_dataPageOffsets.size();
+
+    return true;
+}
+
+void BtrieveReader::close()
+{
+    if (m_file.isOpen())
     {
         m_file.close();
     }
 }
 
-void BtrieveReader::rewind() 
+// ---------------------------------------------------------------------------
+// Record iteration
+// ---------------------------------------------------------------------------
+
+QByteArray BtrieveReader::nextRecord()
 {
-    m_currentPageOffset = HEADER_SIZE;
-    m_slotInPage = 0;
-}
-
-bool BtrieveReader::open() 
-{
-    m_file.setFileName(m_path);
-    if (!m_file.open(QIODevice::ReadOnly)) 
+    while (m_dataPageIndex < m_dataPageOffsets.size())
     {
-        return false;
-    }
-    
-    if (m_file.size() > MAX_FILE_SIZE) 
-    {
-        qWarning() << "BtrieveReader: File exceeds safety limit:" << m_path;
-        return false;
-    }
+        const qint64 pageOffset = m_dataPageOffsets.at(m_dataPageIndex);
 
-    if (!readHeader()) 
-    {
-        // If the first header fails, try to see if there's a valid segment later
-        return moveToNextSegment();
-    }
-    
-    return true;
-}
-
-bool BtrieveReader::readHeader()
-{
-    if (m_file.size() < HEADER_SIZE) return false;
-
-    m_file.seek(0);
-    const QByteArray hdr = m_file.read(1024);
-    if (hdr.size() < 1024) return false;
-
-    // The known lengths we are looking for
-    const QList<int> targetLengths = {1544, 756, 1072};
-
-    // We scan every byte as a potential start of the length field
-    for (int i = 0; i < 512; ++i)
-    {
-        for (ByteOrder order : {ByteOrder::LittleEndian, ByteOrder::BigEndian})
+        if (m_slotInPage + m_physicalRecordLength > m_pageSize)
         {
-            int testLen = static_cast<int>(assemble16(hdr, i, order));
-
-            // If we find one of our known record lengths...
-            if (std::find(targetLengths.begin(), targetLengths.end(), testLen) != targetLengths.end())
-            {
-                // ...then the Page Size is almost always 2 or 4 bytes later
-                for (int pOffset : {i + 2, i + 4})
-                {
-                    int testPage = static_cast<int>(assemble16(hdr, pOffset, order));
-
-                    // Valid page size check: must be > length and a standard power of 2 or large block
-                    if (testPage > testLen && testPage <= 65535 && (testPage % 2 == 0))
-                    {
-                        // We found a match! Now get the count.
-                        // The count in your files follows the page size.
-                        const quint16 cntLow  = assemble16(hdr, pOffset + 4, order);
-                        const quint16 cntHigh = assemble16(hdr, pOffset + 8, order);
-
-                        m_recordLength = testLen;
-                        m_pageSize = testPage;
-                        m_recordCount = (static_cast<quint64>(cntHigh) << 16) | cntLow;
-
-                        // Data starts after the header (512) + the offset we found
-                        m_currentPageOffset = HEADER_SIZE + i;
-                        m_slotsPerPage = (m_pageSize - PAGE_HEADER_SIZE) / (1 + m_recordLength);
-                        m_slotInPage = 0;
-
-                        qDebug() << "[BtrieveReader] MATCH FOUND!"
-                                 << "Offset:" << i
-                                 << "Len:" << m_recordLength
-                                 << "Page:" << m_pageSize
-                                 << "Count:" << m_recordCount;
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    qWarning() << "BtrieveReader: Failed to find valid record/page geometry in" << m_path;
-    return false;
-}
-
-
-bool BtrieveReader::moveToNextSegment()
-{
-    qint64 currentPos = m_file.pos();
-    qint64 fileSize = m_file.size();
-    
-    // Search for "FC" signature in the file
-    m_file.seek(currentPos);
-    QByteArray remaining = m_file.readAll();
-    
-    int index = remaining.indexOf("\x46\x43"); // "FC"
-    
-    if (index != -1) 
-    {
-        qint64 nextSegmentStart = currentPos + index;
-        m_file.seek(nextSegmentStart);
-        
-        if (readHeader()) 
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool BtrieveReader::advanceToNextPage()
-{
-    m_currentPageOffset += m_pageSize;
-    m_slotInPage = 0;
-    return (m_currentPageOffset < m_file.size());
-}
-
-QByteArray BtrieveReader::nextRecord() 
-{
-    while (true) 
-    {
-        if (m_slotInPage >= m_slotsPerPage) 
-        {
-            if (!advanceToNextPage()) 
-            {
-                if (moveToNextSegment()) 
-                {
-                    qDebug() << "[BtrieveReader] Transitioned to new segment.";
-                    continue;
-                }
-                return QByteArray();
-            }
-        }
-
-        const qint64 slotOffset = m_currentPageOffset + PAGE_HEADER_SIZE + (static_cast<qint64>(m_slotInPage) * (1 + m_recordLength));
-        
-        if (slotOffset >= m_file.size()) 
-        {
-            if (moveToNextSegment()) 
-            {
-                continue;
-            }
-            return QByteArray();
-        }
-
-        const int readLen = 1 + m_recordLength;
-        if (slotOffset + readLen > m_file.size()) 
-        {
-            if (moveToNextSegment()) 
-            {
-                continue;
-            }
-            return QByteArray();
-        }
-
-        m_file.seek(slotOffset);
-        QByteArray buffer = m_file.read(readLen);
-        
-        if (buffer.size() < readLen) 
-        {
-            if (moveToNextSegment()) 
-            {
-                continue;
-            }
-            return QByteArray();
-        }
-
-        if (buffer.at(0) == 0x00) 
-        {
-            m_slotInPage++;
-            return buffer.mid(1); 
-        } 
-        else 
-        {
-            m_slotInPage++;
+            // No room for another full slot in this page -- advance
+            m_dataPageIndex++;
+            m_slotInPage = DATA_PAGE_HEADER_SIZE;
             continue;
         }
+
+        const qint64 absoluteOffset = pageOffset + m_slotInPage;
+        m_slotInPage += m_physicalRecordLength;
+
+        if (!m_file.seek(absoluteOffset))
+        {
+            m_dataPageIndex++;
+            m_slotInPage = DATA_PAGE_HEADER_SIZE;
+            continue;
+        }
+
+        const QByteArray slot = m_file.read(m_physicalRecordLength);
+        if (slot.size() < m_recordLength)
+        {
+            // Short read -- likely end of file mid-page
+            m_dataPageIndex++;
+            m_slotInPage = DATA_PAGE_HEADER_SIZE;
+            continue;
+        }
+
+        const QByteArray record = slot.left(m_recordLength);
+
+        if (isAllZero(record))
+        {
+            // Treated as deleted/unused -- keep scanning
+            continue;
+        }
+
+        return record;
     }
+
+    return QByteArray();
 }
 
-// --- Portable Assembly Helpers ---
-
-quint8 BtrieveReader::assemble8(const QByteArray &rec, int offset, ByteOrder order) 
+void BtrieveReader::rewind()
 {
-    if (offset < 0 || offset >= rec.size()) 
+    m_dataPageIndex = 0;
+    m_slotInPage    = DATA_PAGE_HEADER_SIZE;
+}
+
+// ---------------------------------------------------------------------------
+// Static read helpers (little-endian)
+// ---------------------------------------------------------------------------
+
+quint8 BtrieveReader::rb1(const QByteArray &rec, int offset)
+{
+    if (offset < 0 || offset >= rec.size())
     {
         return 0;
     }
     return static_cast<quint8>(rec.at(offset));
 }
 
-quint16 BtrieveReader::assemble16(const QByteArray &rec, int offset, ByteOrder order) 
+quint16 BtrieveReader::rb2(const QByteArray &rec, int offset)
 {
-    if (offset < 0 || offset + 1 >= rec.size()) 
+    if (offset < 0 || offset + 1 >= rec.size())
     {
         return 0;
     }
-    quint8 b0 = static_cast<quint8>(rec.at(offset));
-    quint8 b1 = static_cast<quint8>(rec.at(offset + 1));
-    
-    if (order == ByteOrder::LittleEndian) 
-    {
-        return (static_cast<quint16>(b0)) | (static_cast<quint16>(b1) << 8);
-    } 
-    else 
-    {
-        return (static_cast<quint16>(b0) << 8) | (static_cast<quint16>(b1));
-    }
+    return static_cast<quint16>(rb1(rec, offset))
+         | (static_cast<quint16>(rb1(rec, offset + 1)) << 8);
 }
 
-quint32 BtrieveReader::assemble32(const QByteArray &rec, int offset, ByteOrder order) 
+quint32 BtrieveReader::rb4(const QByteArray &rec, int offset)
 {
-    if (offset < 0 || offset + 3 >= rec.size()) 
+    if (offset < 0 || offset + 3 >= rec.size())
     {
         return 0;
     }
-    quint8 b0 = static_cast<quint8>(rec.at(offset));
-    quint8 b1 = static_cast<quint8>(rec.at(offset + 1));
-    quint8 b2 = static_cast<quint8>(rec.at(offset + 2));
-    quint8 b3 = static_cast<quint8>(rec.at(offset + 3));
-
-    if (order == ByteOrder::LittleEndian) 
-    {
-        return (static_cast<quint32>(b0)) | (static_cast<quint32>(b1) << 8) |
-               (static_cast<quint32>(b2) << 16) | (static_cast<quint32>(b3) << 24);
-    } 
-    else 
-    {
-        return (static_cast<quint32>(b0) << 24) | (static_cast<quint32>(b1) << 16) |
-               (static_cast<quint32>(b2) << 8) | (static_cast<quint32>(b3));
-    }
+    return static_cast<quint32>(rb2(rec, offset))
+         | (static_cast<quint32>(rb2(rec, offset + 2)) << 16);
 }
 
-QString BtrieveReader::assembleStr(const QByteArray &rec, int offset, int length) 
+QString BtrieveReader::rbStr(const QByteArray &rec, int offset, int length)
 {
-    if (offset < 0 || offset >= rec.size()) 
+    if (offset < 0 || offset >= rec.size())
     {
         return QString();
     }
-    
-    int available = static_cast<int>(rec.size()) - offset;
-    int actualLen = std::min(length, available);
-    
-    if (actualLen <= 0) 
+    const int actual = qMin(length, rec.size() - offset);
+    QString result = QString::fromLatin1(rec.constData() + offset, actual);
+    result.remove(QLatin1Char('\0'));
+    return result.trimmed();
+}
+
+// ---------------------------------------------------------------------------
+// Private -- FCR parsing
+// ---------------------------------------------------------------------------
+
+bool BtrieveReader::readFcr()
+{
+    // The FCR occupies the first page. We don't know the page size yet,
+    // so read a generous chunk (4096 is the max Btrieve page size) and
+    // re-seek later once page size is known.
+    if (!m_file.seek(0))
     {
-        return QString();
+        return false;
     }
 
-    QByteArray slice = rec.mid(offset, actualLen);
-    int nullPos = slice.indexOf('\0');
-    if (nullPos != -1) 
+    const QByteArray fcr = m_file.read(4096);
+    if (fcr.size() < 0x20)
     {
-        slice.resize(nullPos);
+        qWarning() << "BtrieveReader: file too small for a valid FCR:"
+                   << m_path;
+        return false;
     }
-    
-    return QString::fromLatin1(slice).trimmed();
+
+    m_pageSize = static_cast<int>(rb2(fcr, FCR_PAGE_LENGTH_OFFSET));
+    const quint16 keyCount = rb2(fcr, FCR_KEY_COUNT_OFFSET);
+    Q_UNUSED(keyCount)
+
+    m_recordLength         = static_cast<int>(rb2(fcr, FCR_RECORD_LENGTH_OFFSET));
+    m_physicalRecordLength = static_cast<int>(rb2(fcr, FCR_PHYS_RECORD_LEN_OFFSET));
+    m_recordCount          = static_cast<int>(rb4(fcr, FCR_RECORD_COUNT_OFFSET));
+
+    if (m_pageSize < 512 || m_pageSize > 4096 || (m_pageSize % 512) != 0)
+    {
+        qWarning() << "BtrieveReader: implausible page size" << m_pageSize
+                   << "in" << m_path << "-- aborting";
+        return false;
+    }
+
+    if (m_recordLength <= 0)
+    {
+        qWarning() << "BtrieveReader: implausible record length"
+                   << m_recordLength << "in" << m_path;
+        return false;
+    }
+
+    if (m_physicalRecordLength < m_recordLength)
+    {
+        // Some files report 0 here; fall back to logical record length.
+        m_physicalRecordLength = m_recordLength;
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Private -- page classification
+// ---------------------------------------------------------------------------
+
+void BtrieveReader::classifyPages()
+{
+    m_dataPageOffsets.clear();
+
+    const qint64 fileSize = m_file.size();
+    qint64 offset = m_pageSize; // skip page 0 (FCR)
+
+    while (offset + m_pageSize <= fileSize)
+    {
+        if (!m_file.seek(offset))
+        {
+            break;
+        }
+
+        const QByteArray pageHeader = m_file.read(16);
+        if (pageHeader.size() < 16)
+        {
+            break;
+        }
+
+        const quint32 keyMarker = rb4(pageHeader, KEY_PAGE_MARKER_OFFSET);
+        const quint8  typeProbe = rb1(pageHeader, PAGE_TYPE_PROBE_OFFSET);
+
+        const bool isKeyPage  = (keyMarker == KEY_PAGE_MARKER_VALUE);
+        const bool isDataPage = !isKeyPage && ((typeProbe & 0x80) != 0);
+
+        if (isDataPage)
+        {
+            m_dataPageOffsets.append(offset);
+        }
+
+        offset += m_pageSize;
+    }
+
+    qDebug() << "BtrieveReader: classified" << m_dataPageOffsets.size()
+             << "data pages out of"
+             << ((fileSize / m_pageSize) - 1) << "candidate pages in"
+             << m_path;
+}
+
+// ---------------------------------------------------------------------------
+// Private -- helpers
+// ---------------------------------------------------------------------------
+
+bool BtrieveReader::isAllZero(const QByteArray &data)
+{
+    for (char c : data)
+    {
+        if (c != 0)
+        {
+            return false;
+        }
+    }
+    return true;
 }
